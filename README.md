@@ -2,6 +2,8 @@
 
 PLEASE NOTE THAT THE STARTER KIT IS NO LONGER SUPPORTED. I HAVE MERELY BROUGHT THIS PAGE BACK ONLINE BECAUSE THERE ARE STILL PEOPLE ASKING ABOUT IT. PLUS THE DOCUMENTATION MAY BE USEFUL TO SOME.
 
+PLEASE ALSO NOTE THAT IF YOU INTEND TO PLAY NEWER DATABASES (E.G. THE WINTER 2025 UPDATE), YOU WILL NEED TO LEAVE THE STARTING YEAR AS 2001.
+
 Welcome to the Championship Manager 01/02 Starter Kit!
 
 The purpose of this little tool is to get you up and running as quickly as possible with CM 01/02. No need for worrying about downloading files, installing anything, using external patchers or tools, or changing compatibility settings - this tool does everything required to get you setup on an original or updated version of CM!
