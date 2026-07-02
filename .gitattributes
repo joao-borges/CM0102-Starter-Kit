@@ -61,3 +61,11 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# Fork: binary assets must never be line-ending-normalized
+data/** binary
+external/** binary
+images/** binary
+packages/** binary
+# but the reassembly script is text
+external/reassemble-game-zip.sh text eol=lf

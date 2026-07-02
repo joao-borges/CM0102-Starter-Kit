@@ -15,16 +15,16 @@ The shipped app runs on Windows (and a Wine-based Mac port). The source here is 
 - **Single-exe packaging:** the csproj defines a custom `ILMerge` target that merges `ICSharpCode.SharpZipLib.dll` into `CM0102StarterKit.exe`. NuGet packages (`ILMerge`, `SharpZipLib`) are restored via package restore.
 - **There are no automated tests, linters, or CI** in this repo.
 
-## Binary assets are not in the repo (important)
+## Binary assets ARE in this fork (differs from upstream)
 
-`data/` and `external/` are gitignored (see `.gitignore`) and absent from a clean checkout. They hold the large binaries the app embeds as resources via `Properties/Resources.resx`:
+Unlike the upstream repo (which gitignores them), **this fork tracks all binary assets** so a clean clone can rebuild the full exe. They are embedded as resources via `Properties/Resources.resx`:
 
-- `data/*.zip` — the 13 database/data-update payloads (`original_data`, `patched_data`, `october_data`, `cm89_data`, …).
-- `external/Game.zip` — the entire game tree extracted on first run.
-- `external/Files/*.exe` — the game executables (`cm0102.exe` plus year/era-specific variants like `cm0102_oct.exe`, `cm89_retro.exe`).
-- `external/events_eng.cfg`, `external/dotNetFx40setup.exe`, etc.
+- `data/*.zip` — the database/data-update payloads (`original_data`, `patched_data`, `october_data`, plus this fork's `may2026_data_patched` / `may2026_2526_data_patched`).
+- `external/Game.zip` — the entire game tree extracted on first run. **Stored split** as `external/Game.zip.part-*` because it exceeds GitHub's 100 MB file limit; before building, reassemble it: `./external/reassemble-game-zip.sh` (or `cat external/Game.zip.part-* > external/Game.zip`). The joined file itself stays gitignored.
+- `external/Files/*.exe` — the game executables (`cm0102.exe` plus year-specific variants `cm0102_oct.exe`, `cm0102_2025.exe`, `cm0102_2026.exe`, …). Note two placeholders: `cm89_retro.exe` is a copy of `cm89.exe` (the shipped v1.2.2 exe these assets were recovered from predates the real one) and `dotNetFx40setup.exe` is a zero-byte stub (Windows-only bootstrap, unused).
+- `external/events_eng.cfg`, `images/*.jpg`, and `packages/` (SharpZipLib 0.86.0 + ILMerge props, force-added so no NuGet restore is needed).
 
-A clean checkout **cannot build** without these. When working here you are almost always editing C# logic/UI, not the assets. Resource names referenced in code (e.g. `Resources.october_data`, `Resources.cm0102_exe`) map to files under those gitignored folders.
+Resource names referenced in code (e.g. `Resources.october_data`, `Resources.cm0102_exe`) map to files under these folders. The 2025/2026 game exes and May-2026 data zips were produced with the sibling `CM0102Patcher` fork's headless harness (see that repo's CLAUDE.md).
 
 ## Runtime layout
 
