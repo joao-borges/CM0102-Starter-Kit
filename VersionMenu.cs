@@ -23,17 +23,13 @@ namespace CM0102_Starter_Kit {
 
         protected override List<Button> GetButtons() {
             return new List<Button> {
-                this.april_database,
-                this.october_database,
                 this.original_database,
                 this.patched_database,
-                this.luessenhoff_database,
-                this.november_database,
-                this.save_database,
-                this.load_database,
                 this.may2026_database,
                 this.may2026_2526_database,
-                this.gslp2526_database
+                this.gslp2526_database,
+                this.save_database,
+                this.load_database
             };
         }
 
@@ -114,17 +110,6 @@ namespace CM0102_Starter_Kit {
             return DataFolder;
         }
 
-        private Database GetPatchedDatabase(Database database, int year) {
-            if (database.Equals(NovemberDatabase) && year.Equals(2020)) {
-                return NovemberDatabasePatched;
-            } else if (database.Equals(AprilDatabase) && year.Equals(2020)) {
-                return AprilDatabasePatched;
-            } else if (database.Equals(OctoberDatabase) && year.Equals(2021)) {
-                return OctoberDatabasePatched;
-            }
-            // Just return the original database if no matches
-            return database;
-        }
 
         private void SwitchDatabase_Click(object sender, EventArgs e) {
             ProgressWindow progressWindow = CreateNewProgressWindow("Loading selected database", 75);
@@ -132,18 +117,7 @@ namespace CM0102_Starter_Kit {
 
             Button button = (Button) sender;
             Database database = Databases.Where(v => string.Equals(v.Name, button.Name)).FirstOrDefault();
-            // Check what year is already set in Nick's Patcher, as we may need to load a patched dataset!
-            int year = Int32.Parse(mainMenu.nickPatcherMenu.GetStartingYear());
-            database = GetPatchedDatabase(database, year);
-
             SetupDatabase(database, progressWindow);
-
-            if (!OctoberDatabasePatched.Equals(database) || !year.Equals(2021)) {
-                // Remove Reading and Derby points deduction patch if not using starting year of 2021 for October 2021 database
-                File.Delete(Path.Combine(PatchesFolder, PointsDeductionPatch));
-            } else if (OctoberDatabasePatched.Equals(database) && year.Equals(2021)) {
-                File.Copy(Path.Combine(OptionalPatchesFolder, PointsDeductionPatch), Path.Combine(PatchesFolder, PointsDeductionPatch), true);
-            }
             progressWindow.SetProgressPercentage(100);
             progressWindow.Close();
             DisplayMessage(database.Label + " database successfully loaded!");

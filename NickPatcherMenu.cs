@@ -196,19 +196,6 @@ namespace CM0102_Starter_Kit {
             }
             progressWindow.SetProgressPercentage(30);
 
-            // We may need to also update the data files, depending on which database is active and what the chosen starting year is.
-            // Currently, this will trigger with the November 2020 and April 2021 databases with a 2020 starting year, and the October 2021 database with a 2021 starting year.
-            Database currentDatabase = CurrentDatabase();
-
-            if (currentDatabase.Equals(NovemberDatabase) || currentDatabase.Equals(NovemberDatabasePatched)) {
-                mainMenu.versionMenu.SetupDatabase(starting_year.Value.Equals(2020) ? NovemberDatabasePatched : NovemberDatabase, progressWindow);
-            } else if (currentDatabase.Equals(AprilDatabase) || currentDatabase.Equals(AprilDatabasePatched)) {
-                mainMenu.versionMenu.SetupDatabase(starting_year.Value.Equals(2020) ? AprilDatabasePatched : AprilDatabase, progressWindow);
-            } else if (currentDatabase.Equals(OctoberDatabase) || currentDatabase.Equals(OctoberDatabasePatched)) {
-                mainMenu.versionMenu.SetupDatabase(starting_year.Value.Equals(2021) ? OctoberDatabasePatched : OctoberDatabase, progressWindow);
-                // Apply Reading and Derby points deduction patch
-                File.Copy(Path.Combine(OptionalPatchesFolder, PointsDeductionPatch), Path.Combine(PatchesFolder, PointsDeductionPatch), true);
-            }
             progressWindow.SetProgressPercentage(100);
             DisplayMessage("Settings successfully changed!");
             progressWindow.Close();

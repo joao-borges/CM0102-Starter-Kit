@@ -78,17 +78,8 @@ namespace CM0102_Starter_Kit {
             { 16, new ConfigLine(16, "PatchFileDirectory", "Patches") }
         };
 
-        private static readonly Dictionary<int, ConfigLine> Nov2020ConfigLines = new Dictionary<int, ConfigLine> {
-            { 1, new ConfigLine(1, "Year", "2020") }
-        };
 
-        private static readonly Dictionary<int, ConfigLine> Apr2021ConfigLines = new Dictionary<int, ConfigLine> {
-            { 1, new ConfigLine(1, "Year", "2020") }
-        };
 
-        private static readonly Dictionary<int, ConfigLine> Oct2021ConfigLines = new Dictionary<int, ConfigLine> {
-            { 1, new ConfigLine(1, "Year", "2021") }
-        };
 
         private static readonly Dictionary<int, ConfigLine> May2026ConfigLines = new Dictionary<int, ConfigLine> {
             { 1, new ConfigLine(1, "Year", "2026") }
@@ -136,18 +127,11 @@ namespace CM0102_Starter_Kit {
 
         internal static readonly Database OriginalDatabase = new Database("original_database", "Original (3.9.60)", Resources.original_data, true, Resources.cm0102_exe);
         internal static readonly Database PatchedDatabase = new Database("patched_database", "Patched (3.9.68)", Resources.patched_data, true, Resources.cm0102_exe);
-        internal static readonly Database OctoberDatabase = new Database("october_database", "October 2021", Resources.october_data, false, Resources.cm0102_exe, PatchedDatabase);
-        internal static readonly Database NovemberDatabase = new Database("november_database", "November 2020", Resources.november_data, false, Resources.cm0102_exe, PatchedDatabase);
-        internal static readonly Database AprilDatabase = new Database("april_database", "April 2021", Resources.april_data, false, Resources.cm0102_exe, PatchedDatabase);
-        internal static readonly Database LuessenhoffDatabase = new Database("luessenhoff_database", "Luessenhoff", Resources.luessenhoff_data, false, Resources.cm0102_exe, OriginalDatabase);
         internal static readonly Database Cm89Database = new Database("cm89_database", "1989/90", Resources.cm89_data, true, Resources.cm89_exe, Cm89ConfigLines);
         internal static readonly Database Cm93Database = new Database("cm93_database", "1993/94", Resources.cm93_data, true, Resources.cm93_exe, Cm93ConfigLines);
         internal static readonly Database Cm95Database = new Database("cm95_database", "1995/96", Resources.cm95_data, true, Resources.cm95_exe, Cm95ConfigLines);
         internal static readonly Database Cm3Database = new Database("cm3_database", "1998/99", Resources.cm3_data, true, Resources.cm3_exe, Cm3ConfigLines);
         internal static readonly Database CustomDatabase = new Database("custom_database", "Custom Database", null, false, Resources.cm0102_exe, PatchedDatabase);
-        internal static readonly Database OctoberDatabasePatched = new Database("october_database_patched", "October 2021", Resources.october_data_patched, false, Resources.cm0102_oct_exe, PatchedDatabase, Oct2021ConfigLines);
-        internal static readonly Database NovemberDatabasePatched = new Database("november_database_patched", "November 2020", Resources.november_data_patched, false, Resources.cm0102_nov_exe, PatchedDatabase, Nov2020ConfigLines);
-        internal static readonly Database AprilDatabasePatched = new Database("april_database_patched", "April 2021", Resources.april_data_patched, false, Resources.cm0102_apr_exe, PatchedDatabase, Apr2021ConfigLines);
         // Self-contained, pre-patched dataset: exe already year-changed to 2026 + year-specific
         // patches applied, data already patched. ConfigLines locks Year (written as Year=0 in the
         // loader ini) so the loader does not re-shift the already-patched exe.
@@ -162,8 +146,7 @@ namespace CM0102_Starter_Kit {
         internal static readonly Database Gslp2526Database = new Database("gslp2526_database", "GSLP 2023", Resources.gslp2526_data, true, Resources.cm0102_gslp2025_exe, Gslp2526ConfigLines);
 
         internal static readonly List<Database> Databases = new List<Database> {
-            OriginalDatabase, PatchedDatabase, OctoberDatabase, NovemberDatabase, AprilDatabase, LuessenhoffDatabase,
-            OctoberDatabasePatched, NovemberDatabasePatched, AprilDatabasePatched, May2026Database, May2026Season2526Database, Gslp2526Database
+            OriginalDatabase, PatchedDatabase, May2026Database, May2026Season2526Database, Gslp2526Database
         };
 
         internal static Database CurrentDatabase() {
