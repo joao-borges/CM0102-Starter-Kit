@@ -167,6 +167,20 @@ namespace CM0102_Starter_Kit.Properties {
                 return ((byte[])(obj));
             }
         }
+
+        public static byte[] gslp2526_data {
+            get {
+                object obj = ResourceManager.GetObject("gslp2526_data", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+
+        public static byte[] cm0102_gslp2025_exe {
+            get {
+                object obj = ResourceManager.GetObject("cm0102_gslp2025_exe", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].

@@ -32,7 +32,8 @@ namespace CM0102_Starter_Kit {
                 this.save_database,
                 this.load_database,
                 this.may2026_database,
-                this.may2026_2526_database
+                this.may2026_2526_database,
+                this.gslp2526_database
             };
         }
 
