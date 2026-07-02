@@ -99,7 +99,7 @@ namespace CM0102_Starter_Kit {
         };
 
         private static readonly Dictionary<int, ConfigLine> Gslp2526ConfigLines = new Dictionary<int, ConfigLine> {
-            { 1, new ConfigLine(1, "Year", "2025") }
+            { 1, new ConfigLine(1, "Year", "2022") }
         };
 
 
@@ -156,9 +156,10 @@ namespace CM0102_Starter_Kit {
         // so the 2026 World Cup falls at the end of the first season and is playable.
         internal static readonly Database May2026Season2526Database = new Database("may2026_2526_database", "May 2026 (25/26)", Resources.may2026_2526_data_patched, true, Resources.cm0102_2025_exe, May2026Season2526ConfigLines);
         // GS Leagues Patch 2023 (Giovani Santana): modern Brazilian/South American league structures.
-        // GS's own exe (Tapani-based, originally year 2022) surgically re-yeared to 2025, paired with
-        // his matched April-2023 database. See CM0102Patcher fork docs/gslp-reconstruction/.
-        internal static readonly Database Gslp2526Database = new Database("gslp2526_database", "GSLP 25/26", Resources.gslp2526_data, true, Resources.cm0102_gslp2025_exe, Gslp2526ConfigLines);
+        // Shipped AS-IS (his original Tapani-based exe, year 2022 -> season 22/23, Brazil Dec-2022 start).
+        // Re-yearing breaks his %4-cycle-keyed scheduling (verified: +3 shift crashes at 0x51df0e during
+        // competition init; original runs fine). See CM0102Patcher fork docs/gslp-reconstruction/.
+        internal static readonly Database Gslp2526Database = new Database("gslp2526_database", "GSLP 2023", Resources.gslp2526_data, true, Resources.cm0102_gslp2025_exe, Gslp2526ConfigLines);
 
         internal static readonly List<Database> Databases = new List<Database> {
             OriginalDatabase, PatchedDatabase, OctoberDatabase, NovemberDatabase, AprilDatabase, LuessenhoffDatabase,

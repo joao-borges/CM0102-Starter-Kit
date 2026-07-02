@@ -170,7 +170,7 @@
             this.gslp2526_database.Size = new System.Drawing.Size(327, 65);
             this.gslp2526_database.TabIndex = 15;
             this.gslp2526_database.TabStop = false;
-            this.gslp2526_database.Text = "GSLP 25/26";
+            this.gslp2526_database.Text = "GSLP 2023";
             this.gslp2526_database.UseVisualStyleBackColor = false;
             this.gslp2526_database.Click += new System.EventHandler(this.SwitchDatabase_Click);
             // 

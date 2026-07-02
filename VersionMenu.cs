@@ -97,6 +97,8 @@ namespace CM0102_Starter_Kit {
                     }
                 }
             }
+            // Tapani-patched exes (e.g. the GSLP database) cache preprocessed data in Game/Temp - ensure it exists
+            Directory.CreateDirectory(Path.Combine(GameFolder, "Temp"));
             progressWindow.SetProgressPercentage(80);
             // Update the loader config files as switching between CM89, CM93 and anything else requires some changes
             UpdateConfigFiles(database);
