@@ -20,6 +20,8 @@
             this.cm3_database = new System.Windows.Forms.Button();
             this.save_database = new System.Windows.Forms.Button();
             this.load_database = new System.Windows.Forms.Button();
+            this.may2026_database = new System.Windows.Forms.Button();
+            this.may2026_2526_database = new System.Windows.Forms.Button();
             this.saveDatabaseDialog = new System.Windows.Forms.SaveFileDialog();
             this.loadDatabaseDialog = new System.Windows.Forms.OpenFileDialog();
             this.SuspendLayout();
@@ -107,6 +109,48 @@
             this.october_database.Text = "October 2021";
             this.october_database.UseVisualStyleBackColor = false;
             this.october_database.Click += new System.EventHandler(this.SwitchDatabase_Click);
+            //
+            // may2026_database
+            //
+            this.may2026_database.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.may2026_database.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.may2026_database.FlatAppearance.BorderColor = System.Drawing.Color.Blue;
+            this.may2026_database.FlatAppearance.BorderSize = 2;
+            this.may2026_database.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.may2026_database.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(66)))));
+            this.may2026_database.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.may2026_database.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
+            this.may2026_database.ForeColor = System.Drawing.Color.White;
+            this.may2026_database.Location = new System.Drawing.Point(120, 345);
+            this.may2026_database.Margin = new System.Windows.Forms.Padding(0);
+            this.may2026_database.Name = "may2026_database";
+            this.may2026_database.Size = new System.Drawing.Size(327, 65);
+            this.may2026_database.TabIndex = 13;
+            this.may2026_database.TabStop = false;
+            this.may2026_database.Text = "May 2026 (26/27)";
+            this.may2026_database.UseVisualStyleBackColor = false;
+            this.may2026_database.Click += new System.EventHandler(this.SwitchDatabase_Click);
+            //
+            // may2026_2526_database
+            //
+            this.may2026_2526_database.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.may2026_2526_database.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.may2026_2526_database.FlatAppearance.BorderColor = System.Drawing.Color.Blue;
+            this.may2026_2526_database.FlatAppearance.BorderSize = 2;
+            this.may2026_2526_database.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.may2026_2526_database.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(66)))));
+            this.may2026_2526_database.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.may2026_2526_database.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
+            this.may2026_2526_database.ForeColor = System.Drawing.Color.White;
+            this.may2026_2526_database.Location = new System.Drawing.Point(449, 345);
+            this.may2026_2526_database.Margin = new System.Windows.Forms.Padding(0);
+            this.may2026_2526_database.Name = "may2026_2526_database";
+            this.may2026_2526_database.Size = new System.Drawing.Size(327, 65);
+            this.may2026_2526_database.TabIndex = 14;
+            this.may2026_2526_database.TabStop = false;
+            this.may2026_2526_database.Text = "May 2026 (25/26)";
+            this.may2026_2526_database.UseVisualStyleBackColor = false;
+            this.may2026_2526_database.Click += new System.EventHandler(this.SwitchDatabase_Click);
             // 
             // november_database
             // 
@@ -295,13 +339,11 @@
             this.Controls.Add(this.april_database);
             this.Controls.Add(this.original_database);
             this.Controls.Add(this.patched_database);
+            this.Controls.Add(this.may2026_database);
+            this.Controls.Add(this.may2026_2526_database);
             this.Controls.Add(this.october_database);
             this.Controls.Add(this.november_database);
             this.Controls.Add(this.luessenhoff_database);
-            this.Controls.Add(this.cm89_database);
-            this.Controls.Add(this.cm93_database);
-            this.Controls.Add(this.cm95_database);
-            this.Controls.Add(this.cm3_database);
             this.Controls.Add(this.save_database);
             this.Controls.Add(this.load_database);
             this.Name = "VersionMenu";
@@ -315,6 +357,8 @@
         private System.Windows.Forms.Button original_database;
         private System.Windows.Forms.Button patched_database;
         private System.Windows.Forms.Button october_database;
+        private System.Windows.Forms.Button may2026_database;
+        private System.Windows.Forms.Button may2026_2526_database;
         private System.Windows.Forms.Button november_database;
         private System.Windows.Forms.Button luessenhoff_database;
         private System.Windows.Forms.Button cm89_database;

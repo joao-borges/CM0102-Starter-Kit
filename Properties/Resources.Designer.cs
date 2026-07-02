@@ -139,6 +139,34 @@ namespace CM0102_Starter_Kit.Properties {
                 return ((byte[])(obj));
             }
         }
+
+        public static byte[] may2026_data_patched {
+            get {
+                object obj = ResourceManager.GetObject("may2026_data_patched", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+
+        public static byte[] cm0102_2026_exe {
+            get {
+                object obj = ResourceManager.GetObject("cm0102_2026_exe", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+
+        public static byte[] may2026_2526_data_patched {
+            get {
+                object obj = ResourceManager.GetObject("may2026_2526_data_patched", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+
+        public static byte[] cm0102_2025_exe {
+            get {
+                object obj = ResourceManager.GetObject("cm0102_2025_exe", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].

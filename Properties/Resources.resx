@@ -142,32 +142,17 @@
   <data name="cm0102_oct_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\external\files\cm0102_oct.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="cm3_data" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\data\cm3_data.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="may2026_data_patched" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\data\may2026_data_patched.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="cm3_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\external\files\cm3.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="cm0102_2026_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\external\files\cm0102_2026.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="cm89_data" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\data\cm89_data.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="may2026_2526_data_patched" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\data\may2026_2526_data_patched.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
-  <data name="cm89_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\external\files\cm89.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="cm89_retro_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\external\files\cm89_retro.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="cm93_data" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\data\cm93_data.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="cm93_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\external\files\cm93.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="cm95_data" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\data\cm95_data.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="cm95_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\external\files\cm95.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="cm0102_2025_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\external\files\cm0102_2025.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="events_eng" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\external\events_eng.cfg;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

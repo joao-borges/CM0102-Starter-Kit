@@ -153,9 +153,13 @@ namespace CM0102_Starter_Kit {
 
             // Copy miscellaneous patches to main Patches folder
             if (this.misc_patches.Enabled && this.misc_patches.Checked) {
-            FileInfo[] patchFiles = new DirectoryInfo(Path.Combine(PatchesFolder, "Misc")).GetFiles("*.patch");
-                if (patchFiles.Length > 0) {
-                    foreach (FileInfo patchFile in patchFiles) {
+                // Older bottle layouts (e.g. the Mac port of v1.2.2) keep the misc collection under Patches/Optional/Misc
+                DirectoryInfo miscFolder = new DirectoryInfo(Path.Combine(PatchesFolder, "Misc"));
+                if (!miscFolder.Exists) {
+                    miscFolder = new DirectoryInfo(Path.Combine(OptionalPatchesFolder, "Misc"));
+                }
+                if (miscFolder.Exists) {
+                    foreach (FileInfo patchFile in miscFolder.GetFiles("*.patch")) {
                         File.Copy(patchFile.FullName, Path.Combine(PatchesFolder, patchFile.Name), true);
                     }
                 }

@@ -90,6 +90,14 @@ namespace CM0102_Starter_Kit {
             { 1, new ConfigLine(1, "Year", "2021") }
         };
 
+        private static readonly Dictionary<int, ConfigLine> May2026ConfigLines = new Dictionary<int, ConfigLine> {
+            { 1, new ConfigLine(1, "Year", "2026") }
+        };
+
+        private static readonly Dictionary<int, ConfigLine> May2026Season2526ConfigLines = new Dictionary<int, ConfigLine> {
+            { 1, new ConfigLine(1, "Year", "2025") }
+        };
+
 
         internal class Database {
             internal Database(string name, string label, byte[] dataFile, bool deleteDataFolder, byte[] exeFile) {
@@ -136,10 +144,17 @@ namespace CM0102_Starter_Kit {
         internal static readonly Database OctoberDatabasePatched = new Database("october_database_patched", "October 2021", Resources.october_data_patched, false, Resources.cm0102_oct_exe, PatchedDatabase, Oct2021ConfigLines);
         internal static readonly Database NovemberDatabasePatched = new Database("november_database_patched", "November 2020", Resources.november_data_patched, false, Resources.cm0102_nov_exe, PatchedDatabase, Nov2020ConfigLines);
         internal static readonly Database AprilDatabasePatched = new Database("april_database_patched", "April 2021", Resources.april_data_patched, false, Resources.cm0102_apr_exe, PatchedDatabase, Apr2021ConfigLines);
+        // Self-contained, pre-patched dataset: exe already year-changed to 2026 + year-specific
+        // patches applied, data already patched. ConfigLines locks Year (written as Year=0 in the
+        // loader ini) so the loader does not re-shift the already-patched exe.
+        internal static readonly Database May2026Database = new Database("may2026_database", "May 2026 (26/27)", Resources.may2026_data_patched, true, Resources.cm0102_2026_exe, May2026ConfigLines);
+        // Same May 2026 squads but starting season 2025/26 (Euro) / Brazil 2026 (December 2025 start),
+        // so the 2026 World Cup falls at the end of the first season and is playable.
+        internal static readonly Database May2026Season2526Database = new Database("may2026_2526_database", "May 2026 (25/26)", Resources.may2026_2526_data_patched, true, Resources.cm0102_2025_exe, May2026Season2526ConfigLines);
 
         internal static readonly List<Database> Databases = new List<Database> {
-            OriginalDatabase, PatchedDatabase, OctoberDatabase, NovemberDatabase, AprilDatabase, LuessenhoffDatabase, Cm89Database,
-            Cm93Database, Cm95Database, Cm3Database, OctoberDatabasePatched, NovemberDatabasePatched, AprilDatabasePatched
+            OriginalDatabase, PatchedDatabase, OctoberDatabase, NovemberDatabase, AprilDatabase, LuessenhoffDatabase,
+            OctoberDatabasePatched, NovemberDatabasePatched, AprilDatabasePatched, May2026Database, May2026Season2526Database
         };
 
         internal static Database CurrentDatabase() {

@@ -29,12 +29,10 @@ namespace CM0102_Starter_Kit {
                 this.patched_database,
                 this.luessenhoff_database,
                 this.november_database,
-                this.cm89_database,
-                this.cm93_database,
-                this.cm95_database,
-                this.cm3_database,
                 this.save_database,
-                this.load_database
+                this.load_database,
+                this.may2026_database,
+                this.may2026_2526_database
             };
         }
 
@@ -90,8 +88,12 @@ namespace CM0102_Starter_Kit {
             // Copy Fonts folder across if it doesn't already exist
             if (!Directory.Exists(FontsFolder)) {
                 DirectoryInfo fontsFolder = Directory.CreateDirectory(FontsFolder);
-                foreach (FileInfo file in new DirectoryInfo(Path.Combine(GameFolder, "Fonts")).GetFiles()) {
-                    File.Copy(file.FullName, Path.Combine(fontsFolder.FullName, Path.GetFileName(file.FullName)), true);
+                // The Mac port's Game folder has no Fonts directory, so only copy fonts across if the source exists
+                DirectoryInfo gameFontsFolder = new DirectoryInfo(Path.Combine(GameFolder, "Fonts"));
+                if (gameFontsFolder.Exists) {
+                    foreach (FileInfo file in gameFontsFolder.GetFiles()) {
+                        File.Copy(file.FullName, Path.Combine(fontsFolder.FullName, Path.GetFileName(file.FullName)), true);
+                    }
                 }
             }
             progressWindow.SetProgressPercentage(80);
