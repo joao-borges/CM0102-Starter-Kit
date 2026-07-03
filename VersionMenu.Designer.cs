@@ -14,7 +14,6 @@
             this.load_database = new System.Windows.Forms.Button();
             this.may2026_database = new System.Windows.Forms.Button();
             this.may2026_2526_database = new System.Windows.Forms.Button();
-            this.gslp2526_database = new System.Windows.Forms.Button();
             this.saveDatabaseDialog = new System.Windows.Forms.SaveFileDialog();
             this.loadDatabaseDialog = new System.Windows.Forms.OpenFileDialog();
             this.SuspendLayout();
@@ -102,27 +101,6 @@
             this.may2026_2526_database.Text = "May 2026 (25/26)";
             this.may2026_2526_database.UseVisualStyleBackColor = false;
             this.may2026_2526_database.Click += new System.EventHandler(this.SwitchDatabase_Click);
-            //
-            // gslp2526_database
-            //
-            this.gslp2526_database.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.gslp2526_database.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.gslp2526_database.FlatAppearance.BorderColor = System.Drawing.Color.Blue;
-            this.gslp2526_database.FlatAppearance.BorderSize = 2;
-            this.gslp2526_database.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.gslp2526_database.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(66)))));
-            this.gslp2526_database.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.gslp2526_database.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
-            this.gslp2526_database.ForeColor = System.Drawing.Color.White;
-            this.gslp2526_database.Location = new System.Drawing.Point(120, 278);
-            this.gslp2526_database.Margin = new System.Windows.Forms.Padding(0);
-            this.gslp2526_database.Name = "gslp2526_database";
-            this.gslp2526_database.Size = new System.Drawing.Size(327, 65);
-            this.gslp2526_database.TabIndex = 15;
-            this.gslp2526_database.TabStop = false;
-            this.gslp2526_database.Text = "GSLP 2023";
-            this.gslp2526_database.UseVisualStyleBackColor = false;
-            this.gslp2526_database.Click += new System.EventHandler(this.SwitchDatabase_Click);
             // 
             // save_database
             // 
@@ -135,7 +113,7 @@
             this.save_database.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.save_database.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
             this.save_database.ForeColor = System.Drawing.Color.White;
-            this.save_database.Location = new System.Drawing.Point(120, 345);
+            this.save_database.Location = new System.Drawing.Point(120, 278);
             this.save_database.Margin = new System.Windows.Forms.Padding(0);
             this.save_database.Name = "save_database";
             this.save_database.Size = new System.Drawing.Size(327, 65);
@@ -156,7 +134,7 @@
             this.load_database.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.load_database.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
             this.load_database.ForeColor = System.Drawing.Color.White;
-            this.load_database.Location = new System.Drawing.Point(449, 345);
+            this.load_database.Location = new System.Drawing.Point(449, 278);
             this.load_database.Margin = new System.Windows.Forms.Padding(0);
             this.load_database.Name = "load_database";
             this.load_database.Size = new System.Drawing.Size(327, 65);
@@ -186,7 +164,6 @@
             this.Controls.Add(this.patched_database);
             this.Controls.Add(this.may2026_database);
             this.Controls.Add(this.may2026_2526_database);
-            this.Controls.Add(this.gslp2526_database);
             this.Controls.Add(this.save_database);
             this.Controls.Add(this.load_database);
             this.Name = "VersionMenu";
@@ -200,7 +177,6 @@
         private System.Windows.Forms.Button patched_database;
         private System.Windows.Forms.Button may2026_database;
         private System.Windows.Forms.Button may2026_2526_database;
-        private System.Windows.Forms.Button gslp2526_database;
         private System.Windows.Forms.Button save_database;
         private System.Windows.Forms.Button load_database;
         private System.Windows.Forms.SaveFileDialog saveDatabaseDialog;
