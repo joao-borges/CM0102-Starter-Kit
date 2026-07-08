@@ -52,22 +52,21 @@ namespace CM0102_Starter_Kit {
 
 
 
-        // The GSLP exes ship with most options PRE-BAKED by GS (coloured attributes,
-        // unprotected contracts, 9 subs, regen fixes, load all players - verified against
-        // Nick's patch tables), so like the era databases those lines are locked but written
-        // FALSE: re-applying loader patches on top of the modified exe corrupts it (e.g. the
-        // HiddenAttributes cave at 0x6dc000 lands on GS's extended data tables -> crash on
-        // opening any player profile). Only verified-clean runtime patches stay true
-        // (HideNonPublicBids) or ship as patch files (NoForeignRestrictionsForAll).
-        // UnCap20s / NoWorkPermits / ChangeTo1280x800 were verified against the loader
-        // source (nckstwrt/CM0102Loader): every target site is stock in the GSLP exes and
-        // the spacemaker prelude is pre-applied, so the loader applies them cleanly.
+        // Every option here was verified byte-by-byte against the loader source
+        // (nckstwrt/CM0102Loader) on the GSLP exes. TRUE = the loader's patch sites are
+        // stock (or already carry Nick's bytes, making the write idempotent) so it applies
+        // cleanly: coloured attributes (GS pre-baked Nick's patch with a near-identical
+        // palette; the loader just rewrites the same cave), uncap, work permits, 1280x800
+        // (spacemaker prelude pre-applied), hidden bids. FALSE + locked = GS baked his OWN
+        // variant at those sites (regen fixes, load-all-players) - the loader blindly
+        // overwriting his code corrupts the exe (the original player-screen crash).
+        // 9 subs is pre-baked; hidden attributes + foreign limits ship as patch files.
         private static Dictionary<int, ConfigLine> GslpConfigLines(string year) {
             return new Dictionary<int, ConfigLine> {
                 { 1, new ConfigLine(1, "Year", year) },
                 { 2, new ConfigLine(2, "SpeedMultiplier", "4") },
                 { 3, new ConfigLine(3, "CurrencyMultiplier", "1.00") },
-                { 4, new ConfigLine(4, "ColouredAttributes", "false") },
+                { 4, new ConfigLine(4, "ColouredAttributes", "true") },
                 { 5, new ConfigLine(5, "DisableUnprotectedContracts", "false") },
                 { 6, new ConfigLine(6, "HideNonPublicBids", "true") },
                 { 7, new ConfigLine(7, "IncreaseToSevenSubs", "false") },
@@ -83,7 +82,7 @@ namespace CM0102_Starter_Kit {
         }
 
         internal static readonly List<string> GslpPatchFiles = new List<string> {
-            "NoForeignRestrictionsForAll.patch"
+            "NoForeignRestrictionsForAll.patch", "HiddenAttributes.patch"
         };
 
 
