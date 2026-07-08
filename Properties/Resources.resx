@@ -163,4 +163,16 @@
   <data name="ruud" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\ruud.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="gslp_data" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\data\gslp_data.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cm0102_gslp2025_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\external\files\cm0102_gslp2025.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cm0102_gslp2026_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\external\files\cm0102_gslp2026.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="cmexplorer" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\external\cmexplorer.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

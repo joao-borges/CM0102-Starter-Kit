@@ -41,7 +41,8 @@ namespace CM0102_Starter_Kit {
                 this.cm_scout,
                 this.player_finder,
                 this.backup_saves,
-                this.restore_saves
+                this.restore_saves,
+                this.cm_explorer
             };
         }
 
@@ -160,6 +161,21 @@ namespace CM0102_Starter_Kit {
 
         private void PlayerFinder_Click(object sender, EventArgs e) {
             RunExternalProcess(GameFolder, Path.Combine(GameFolder, "gpf2.exe"));
+        }
+
+        private void CmExplorer_Click(object sender, EventArgs e) {
+            string cmExplorerFolder = Path.Combine(GameFolder, "CMExplorer");
+            string cmExplorerExe = Path.Combine(cmExplorerFolder, "CMExplorer.exe");
+            // CM Explorer is embedded as a zip and extracted on first use
+            if (!File.Exists(cmExplorerExe)) {
+                string cmExplorerZipFile = cmExplorerFolder + ".zip";
+                File.WriteAllBytes(cmExplorerZipFile, Resources.cmexplorer);
+                new FastZip().ExtractZip(cmExplorerZipFile, cmExplorerFolder, null);
+                File.Delete(cmExplorerZipFile);
+                DisplayMessage("CM Explorer can only open UNCOMPRESSED save games. In the game, untick \"Compress Save Game Files\" in the Options screen before saving.");
+            }
+            // Working directory is the Game folder, where the .sav files live
+            RunExternalProcess(GameFolder, cmExplorerExe);
         }
 
         private void AndroidMenu_Click(object sender, EventArgs e) {

@@ -89,6 +89,36 @@ namespace CM0102_Starter_Kit {
             { 1, new ConfigLine(1, "Year", "2025") }
         };
 
+        // The GSLP datasets ship with the user-facing loader options baked on (and locked in
+        // Nick's Patcher menu). 9 subs / hidden attributes / foreign limits are patch FILES
+        // (copied to Game/Patches by SetupDatabase), which is why lines 7 and 12 stay false
+        // and line 16 points the loader at the Patches folder for the Standard play path too.
+        // CurrencyMultiplier and AddTapaniRegenCode are pinned so stale custom-ini values
+        // can't apply exe-layout-sensitive patches on top of the heavily modified GSLP exes.
+        private static Dictionary<int, ConfigLine> GslpConfigLines(string year) {
+            return new Dictionary<int, ConfigLine> {
+                { 1, new ConfigLine(1, "Year", year) },
+                { 2, new ConfigLine(2, "SpeedMultiplier", "4") },
+                { 3, new ConfigLine(3, "CurrencyMultiplier", "1.00") },
+                { 4, new ConfigLine(4, "ColouredAttributes", "true") },
+                { 5, new ConfigLine(5, "DisableUnprotectedContracts", "true") },
+                { 6, new ConfigLine(6, "HideNonPublicBids", "true") },
+                { 7, new ConfigLine(7, "IncreaseToSevenSubs", "false") },
+                { 8, new ConfigLine(8, "RegenFixes", "true") },
+                { 9, new ConfigLine(9, "ForceLoadAllPlayers", "true") },
+                { 10, new ConfigLine(10, "AddTapaniRegenCode", "false") },
+                { 11, new ConfigLine(11, "UnCap20s", "true") },
+                { 12, new ConfigLine(12, "RemoveForeignPlayerLimit", "false") },
+                { 13, new ConfigLine(13, "NoWorkPermits", "true") },
+                { 14, new ConfigLine(14, "ChangeTo1280x800", "true") },
+                { 16, new ConfigLine(16, "PatchFileDirectory", PatchesFolderName) }
+            };
+        }
+
+        internal static readonly List<string> GslpPatchFiles = new List<string> {
+            "IncreaseToNineSubs.patch", "HiddenAttributes.patch", "NoForeignRestrictionsForAll.patch"
+        };
+
 
 
         internal class Database {
@@ -136,10 +166,21 @@ namespace CM0102_Starter_Kit {
         // Same May 2026 squads but starting season 2025/26 (Euro) / Brazil 2026 (December 2025 start),
         // so the 2026 World Cup falls at the end of the first season and is playable.
         internal static readonly Database May2026Season2526Database = new Database("may2026_2526_database", "May 2026 (25/26)", Resources.may2026_2526_data_patched, true, Resources.cm0102_2025_exe, May2026Season2526ConfigLines);
+        // GSLP (GS Leagues Patch) x May-2026 transplant datasets. Both share one data zip
+        // (Resources.gslp_data, no marker inside - SetupDatabase writes the detector file);
+        // the exes are pre-patched (re-year + WC-2026 field on the 2025 one + fixes), so the
+        // Year is locked. 25/26 = Euro season 2025/26, Brazilian season 2026, WC-2026 at the
+        // end of the first season. 26/27 = Euro season 2026/27, Brazilian season 2027.
+        internal static readonly Database Gslp2526Database = new Database("gslp_2526_database", "25/26 (2026)", Resources.gslp_data, true, Resources.cm0102_gslp2025_exe, GslpConfigLines("2025"));
+        internal static readonly Database Gslp2627Database = new Database("gslp_2627_database", "26/27 (2027)", Resources.gslp_data, true, Resources.cm0102_gslp2026_exe, GslpConfigLines("2026"));
 
         internal static readonly List<Database> Databases = new List<Database> {
-            OriginalDatabase, PatchedDatabase, May2026Database, May2026Season2526Database
+            OriginalDatabase, PatchedDatabase, May2026Database, May2026Season2526Database, Gslp2526Database, Gslp2627Database
         };
+
+        internal static bool IsGslpDatabase(Database database) {
+            return Gslp2526Database.Equals(database) || Gslp2627Database.Equals(database);
+        }
 
         internal static Database CurrentDatabase() {
             foreach (Database database in Databases) {

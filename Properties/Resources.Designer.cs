@@ -168,20 +168,6 @@ namespace CM0102_Starter_Kit.Properties {
             }
         }
 
-        public static byte[] gslp2526_data {
-            get {
-                object obj = ResourceManager.GetObject("gslp2526_data", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-
-        public static byte[] cm0102_gslp2025_exe {
-            get {
-                object obj = ResourceManager.GetObject("cm0102_gslp2025_exe", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
-        
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
@@ -399,6 +385,46 @@ namespace CM0102_Starter_Kit.Properties {
             get {
                 object obj = ResourceManager.GetObject("ruud", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] gslp_data {
+            get {
+                object obj = ResourceManager.GetObject("gslp_data", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] cm0102_gslp2025_exe {
+            get {
+                object obj = ResourceManager.GetObject("cm0102_gslp2025_exe", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] cm0102_gslp2026_exe {
+            get {
+                object obj = ResourceManager.GetObject("cm0102_gslp2026_exe", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        public static byte[] cmexplorer {
+            get {
+                object obj = ResourceManager.GetObject("cmexplorer", resourceCulture);
+                return ((byte[])(obj));
             }
         }
     }

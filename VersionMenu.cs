@@ -27,6 +27,8 @@ namespace CM0102_Starter_Kit {
                 this.patched_database,
                 this.may2026_database,
                 this.may2026_2526_database,
+                this.gslp_2526_database,
+                this.gslp_2627_database,
                 this.save_database,
                 this.load_database
             };
@@ -35,6 +37,12 @@ namespace CM0102_Starter_Kit {
         private void UpdateConfigFiles(Database database) {
             string defaultConfig = Path.Combine(GameFolder, CmLoaderConfigFilename);
             List<string> defaultLines = GetDefaultConfigFileLines(defaultConfig, database, false);
+            // The GSLP databases force PatchFileDirectory (line 16) so the Standard play path
+            // auto-loads Game/Patches; restore the stock value for databases that don't force
+            // it, as GetDefaultConfigFileLines otherwise carries the old value over.
+            if (defaultLines.Count >= 16 && !database.ConfigLines.ContainsKey(16)) {
+                defaultLines[15] = "PatchFileDirectory = .";
+            }
             WriteToFile(defaultLines, defaultConfig);
 
             string customConfig = Path.Combine(GameFolder, CmLoaderCustomConfigFilename);
@@ -75,11 +83,34 @@ namespace CM0102_Starter_Kit {
         }
 
         internal void SetupDatabase(Database database, ProgressWindow progressWindow) {
+            bool wasGslpDatabase = IsGslpDatabase(CurrentDatabase());
             if (database.PrerequisiteDatabase != null) {
                 CopyDataToGame(database.PrerequisiteDatabase);
                 progressWindow.SetProgressPercentage(40);
             }
             CopyDataToGame(database);
+            // Shared data zips (e.g. the GSLP ones) carry no database detector file inside,
+            // so write it here; zips that do include one are left untouched.
+            string detectorFile = Path.Combine(DataFolder, database.Name + ".txt");
+            if (!File.Exists(detectorFile)) {
+                WriteToFile(new List<string> { database.Label }, detectorFile);
+            }
+            // The GSLP databases ship with the 9-subs/hidden-attributes/foreign-limit patch
+            // files enabled (the loader auto-applies Game/Patches via the forced
+            // PatchFileDirectory); remove them again when switching away so they can't
+            // silently apply to other databases' exes.
+            if (IsGslpDatabase(database)) {
+                foreach (string patchFile in GslpPatchFiles) {
+                    File.Copy(Path.Combine(OptionalPatchesFolder, patchFile), Path.Combine(PatchesFolder, patchFile), true);
+                }
+            } else if (wasGslpDatabase) {
+                foreach (string patchFile in GslpPatchFiles) {
+                    string appliedPatchFile = Path.Combine(PatchesFolder, patchFile);
+                    if (File.Exists(appliedPatchFile)) {
+                        File.Delete(appliedPatchFile);
+                    }
+                }
+            }
             progressWindow.SetProgressPercentage(70);
             // Copy Fonts folder across if it doesn't already exist
             if (!Directory.Exists(FontsFolder)) {

@@ -17,6 +17,7 @@
             this.player_finder = new System.Windows.Forms.Button();
             this.android_menu = new System.Windows.Forms.Button();
             this.restore_saves = new System.Windows.Forms.Button();
+            this.cm_explorer = new System.Windows.Forms.Button();
             this.restoreSaveDialog = new System.Windows.Forms.OpenFileDialog();
             this.SuspendLayout();
             // 
@@ -219,16 +220,38 @@
             this.restore_saves.Text = "Restore Save Games";
             this.restore_saves.UseVisualStyleBackColor = false;
             this.restore_saves.Click += new System.EventHandler(this.RestoreSaves_Click);
-            // 
+            //
+            // cm_explorer
+            //
+            this.cm_explorer.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.cm_explorer.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.cm_explorer.FlatAppearance.BorderColor = System.Drawing.Color.Blue;
+            this.cm_explorer.FlatAppearance.BorderSize = 2;
+            this.cm_explorer.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.cm_explorer.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(66)))));
+            this.cm_explorer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cm_explorer.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
+            this.cm_explorer.ForeColor = System.Drawing.Color.White;
+            this.cm_explorer.Location = new System.Drawing.Point(236, 479);
+            this.cm_explorer.Margin = new System.Windows.Forms.Padding(0);
+            this.cm_explorer.Name = "cm_explorer";
+            this.cm_explorer.Size = new System.Drawing.Size(327, 65);
+            this.cm_explorer.TabIndex = 10;
+            this.cm_explorer.TabStop = false;
+            this.cm_explorer.Text = "CM Explorer (Save Editor)";
+            this.cm_explorer.UseVisualStyleBackColor = false;
+            this.cm_explorer.Click += new System.EventHandler(this.CmExplorer_Click);
+            //
             // restoreSaveDialog
-            // 
+            //
             this.restoreSaveDialog.FileOk += new System.ComponentModel.CancelEventHandler(this.RestoreSavesDialog_FileOk);
-            // 
+            //
             // MainMenu
-            // 
+            //
             this.BackgroundImage = global::CM0102_Starter_Kit.Properties.Resources.batigol;
             this.ClientSize = new System.Drawing.Size(800, 600);
             this.Controls.Add(this.restore_saves);
+            this.Controls.Add(this.cm_explorer);
             this.Controls.Add(this.switch_update);
             this.Controls.Add(this.install_var);
             this.Controls.Add(this.nick_patcher);
@@ -256,6 +279,7 @@
         private System.Windows.Forms.Button player_finder;
         private System.Windows.Forms.Button android_menu;
         private System.Windows.Forms.Button restore_saves;
+        private System.Windows.Forms.Button cm_explorer;
         private System.Windows.Forms.OpenFileDialog restoreSaveDialog;
     }
 }
