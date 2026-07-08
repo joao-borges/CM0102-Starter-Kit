@@ -121,9 +121,6 @@
   <data name="batigol" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\batigol.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="boca" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\images\boca.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="cm0102_exe" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\external\files\cm0102.exe;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
@@ -136,17 +133,11 @@
   <data name="logo" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\logo.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="maxim" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\images\maxim.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="owen" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\owen.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="patched_data" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\data\patched_data.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </data>
-  <data name="ruud" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\images\ruud.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="gslp_data" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\data\gslp_data.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>

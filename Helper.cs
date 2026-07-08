@@ -59,8 +59,9 @@ namespace CM0102_Starter_Kit {
         // HiddenAttributes cave at 0x6dc000 lands on GS's extended data tables -> crash on
         // opening any player profile). Only verified-clean runtime patches stay true
         // (HideNonPublicBids) or ship as patch files (NoForeignRestrictionsForAll).
-        // UnCap20s / NoWorkPermits / ChangeTo1280x800 use loader-internal tables that can't
-        // be verified against this exe, so they stay off until proven in-game.
+        // UnCap20s / NoWorkPermits / ChangeTo1280x800 were verified against the loader
+        // source (nckstwrt/CM0102Loader): every target site is stock in the GSLP exes and
+        // the spacemaker prelude is pre-applied, so the loader applies them cleanly.
         private static Dictionary<int, ConfigLine> GslpConfigLines(string year) {
             return new Dictionary<int, ConfigLine> {
                 { 1, new ConfigLine(1, "Year", year) },
@@ -73,10 +74,10 @@ namespace CM0102_Starter_Kit {
                 { 8, new ConfigLine(8, "RegenFixes", "false") },
                 { 9, new ConfigLine(9, "ForceLoadAllPlayers", "false") },
                 { 10, new ConfigLine(10, "AddTapaniRegenCode", "false") },
-                { 11, new ConfigLine(11, "UnCap20s", "false") },
+                { 11, new ConfigLine(11, "UnCap20s", "true") },
                 { 12, new ConfigLine(12, "RemoveForeignPlayerLimit", "false") },
-                { 13, new ConfigLine(13, "NoWorkPermits", "false") },
-                { 14, new ConfigLine(14, "ChangeTo1280x800", "false") },
+                { 13, new ConfigLine(13, "NoWorkPermits", "true") },
+                { 14, new ConfigLine(14, "ChangeTo1280x800", "true") },
                 { 16, new ConfigLine(16, "PatchFileDirectory", PatchesFolderName) }
             };
         }
