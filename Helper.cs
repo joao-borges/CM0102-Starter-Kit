@@ -55,18 +55,18 @@ namespace CM0102_Starter_Kit {
         // Every option here was verified byte-by-byte against the loader source
         // (nckstwrt/CM0102Loader) on the GSLP exes. TRUE = the loader's patch sites are
         // stock (or already carry Nick's bytes, making the write idempotent) so it applies
-        // cleanly: coloured attributes (GS pre-baked Nick's patch with a near-identical
-        // palette; the loader just rewrites the same cave), uncap, work permits, 1280x800
-        // (spacemaker prelude pre-applied), hidden bids. FALSE + locked = GS baked his OWN
-        // variant at those sites (regen fixes, load-all-players) - the loader blindly
-        // overwriting his code corrupts the exe (the original player-screen crash).
+        // cleanly: uncap, work permits, 1280x800 (spacemaker prelude pre-applied), hidden
+        // bids. FALSE + locked = either pre-baked and working as-is (coloured attributes -
+        // GS ships Nick's patch with his own palette, user-confirmed rendering) or GS baked
+        // his OWN variant at those sites (regen fixes, load-all-players) - the loader
+        // blindly overwriting his code corrupts the exe (the original player-screen crash).
         // 9 subs is pre-baked; hidden attributes + foreign limits ship as patch files.
         private static Dictionary<int, ConfigLine> GslpConfigLines(string year) {
             return new Dictionary<int, ConfigLine> {
                 { 1, new ConfigLine(1, "Year", year) },
                 { 2, new ConfigLine(2, "SpeedMultiplier", "4") },
                 { 3, new ConfigLine(3, "CurrencyMultiplier", "1.00") },
-                { 4, new ConfigLine(4, "ColouredAttributes", "true") },
+                { 4, new ConfigLine(4, "ColouredAttributes", "false") },
                 { 5, new ConfigLine(5, "DisableUnprotectedContracts", "false") },
                 { 6, new ConfigLine(6, "HideNonPublicBids", "true") },
                 { 7, new ConfigLine(7, "IncreaseToSevenSubs", "false") },
