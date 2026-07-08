@@ -77,12 +77,6 @@
       <DependentUpon>ProgressWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="Helper.cs" />
-    <Compile Include="AndroidMenu.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="AndroidMenu.Designer.cs">
-      <DependentUpon>AndroidMenu.cs</DependentUpon>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -107,23 +101,11 @@
     <Compile Include="MainMenu.Designer.cs">
       <DependentUpon>MainMenu.cs</DependentUpon>
     </Compile>
-    <Compile Include="NickPatcherMenu.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="NickPatcherMenu.Designer.cs">
-      <DependentUpon>NickPatcherMenu.cs</DependentUpon>
-    </Compile>
     <Compile Include="VersionMenu.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="VersionMenu.Designer.cs">
       <DependentUpon>VersionMenu.cs</DependentUpon>
-    </Compile>
-    <Compile Include="PlayMenu.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="PlayMenu.Designer.cs">
-      <DependentUpon>PlayMenu.cs</DependentUpon>
     </Compile>
     <EmbeddedResource Include="ProgressWindow.resx">
       <DependentUpon>ProgressWindow.cs</DependentUpon>
@@ -137,20 +119,8 @@
       <DependentUpon>MainMenu.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
-    <EmbeddedResource Include="NickPatcherMenu.resx">
-      <DependentUpon>NickPatcherMenu.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="AndroidMenu.resx">
-      <DependentUpon>AndroidMenu.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
     <EmbeddedResource Include="VersionMenu.resx">
       <DependentUpon>VersionMenu.cs</DependentUpon>
-      <SubType>Designer</SubType>
-    </EmbeddedResource>
-    <EmbeddedResource Include="PlayMenu.resx">
-      <DependentUpon>PlayMenu.cs</DependentUpon>
       <SubType>Designer</SubType>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">

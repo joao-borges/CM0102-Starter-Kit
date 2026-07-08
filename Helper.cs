@@ -23,7 +23,6 @@ namespace CM0102_Starter_Kit {
         internal static readonly string PatchesFolder = Path.Combine(GameFolder, PatchesFolderName);
         internal static readonly string OptionalPatchesFolder = Path.Combine(PatchesFolder, "Optional");
         internal static readonly string PointsDeductionPatch = "PointsDeductions.patch";
-        internal static readonly string ExagearFolder = Path.Combine(GameFolder, "Android", "Exagear");
         internal static readonly string SwitchUpdateMessage = "Please use the Data Updates menu to load up a database first!";
         internal static readonly CultureInfo CultureInfo = new CultureInfo("en-GB");
 
@@ -43,51 +42,15 @@ namespace CM0102_Starter_Kit {
             internal string Value { get; }
         }
 
-        private static readonly Dictionary<int, ConfigLine> Cm89ConfigLines = new Dictionary<int, ConfigLine> {
-            { 1, new ConfigLine(1, "Year", "1989") },
-            { 4, new ConfigLine(4, "ColouredAttributes", "false") },
-            { 5, new ConfigLine(5, "DisableUnprotectedContracts", "false") },
-            { 12, new ConfigLine(12, "RemoveForeignPlayerLimit", "false") }
-        };
-
-        private static readonly Dictionary<int, ConfigLine> Cm93ConfigLines = new Dictionary<int, ConfigLine> {
-            { 1, new ConfigLine(1, "Year", "1993") },
-            { 4, new ConfigLine(4, "ColouredAttributes", "false") },
-            { 5, new ConfigLine(5, "DisableUnprotectedContracts", "false") },
-            { 8, new ConfigLine(8, "RegenFixes", "false") }
-        };
-
-        private static readonly Dictionary<int, ConfigLine> Cm95ConfigLines = new Dictionary<int, ConfigLine> {
-            { 1, new ConfigLine(1, "Year", "1995") },
-            { 4, new ConfigLine(4, "ColouredAttributes", "false") },
-            { 5, new ConfigLine(5, "DisableUnprotectedContracts", "false") },
-            { 8, new ConfigLine(8, "RegenFixes", "false") }
-        };
-
-        private static readonly Dictionary<int, ConfigLine> Cm3ConfigLines = new Dictionary<int, ConfigLine> {
-            { 1, new ConfigLine(1, "Year", "1998") },
-            { 4, new ConfigLine(4, "ColouredAttributes", "false") },
-            { 5, new ConfigLine(5, "DisableUnprotectedContracts", "false") },
-            { 8, new ConfigLine(8, "RegenFixes", "false") },
-            { 10, new ConfigLine(10, "AddTapaniRegenCode", "false") }
-        };
-
-        private static readonly Dictionary<int, ConfigLine> AndroidConfigLines = new Dictionary<int, ConfigLine> {
-            { 9, new ConfigLine(9, "ForceLoadAllPlayers", "false") },
-            { 14, new ConfigLine(14, "ChangeTo1280x800", "false") },
-            { 16, new ConfigLine(16, "PatchFileDirectory", "Patches") }
-        };
 
 
 
 
-        private static readonly Dictionary<int, ConfigLine> May2026ConfigLines = new Dictionary<int, ConfigLine> {
-            { 1, new ConfigLine(1, "Year", "2026") }
-        };
 
-        private static readonly Dictionary<int, ConfigLine> May2026Season2526ConfigLines = new Dictionary<int, ConfigLine> {
-            { 1, new ConfigLine(1, "Year", "2025") }
-        };
+
+
+
+
 
         // The GSLP exes ship with most options PRE-BAKED by GS (coloured attributes,
         // unprotected contracts, 9 subs, regen fixes, load all players - verified against
@@ -155,20 +118,8 @@ namespace CM0102_Starter_Kit {
             internal byte[] ExeFile { get; }
         }
 
-        internal static readonly Database OriginalDatabase = new Database("original_database", "Original (3.9.60)", Resources.original_data, true, Resources.cm0102_exe);
         internal static readonly Database PatchedDatabase = new Database("patched_database", "Patched (3.9.68)", Resources.patched_data, true, Resources.cm0102_exe);
-        internal static readonly Database Cm89Database = new Database("cm89_database", "1989/90", Resources.cm89_data, true, Resources.cm89_exe, Cm89ConfigLines);
-        internal static readonly Database Cm93Database = new Database("cm93_database", "1993/94", Resources.cm93_data, true, Resources.cm93_exe, Cm93ConfigLines);
-        internal static readonly Database Cm95Database = new Database("cm95_database", "1995/96", Resources.cm95_data, true, Resources.cm95_exe, Cm95ConfigLines);
-        internal static readonly Database Cm3Database = new Database("cm3_database", "1998/99", Resources.cm3_data, true, Resources.cm3_exe, Cm3ConfigLines);
         internal static readonly Database CustomDatabase = new Database("custom_database", "Custom Database", null, false, Resources.cm0102_exe, PatchedDatabase);
-        // Self-contained, pre-patched dataset: exe already year-changed to 2026 + year-specific
-        // patches applied, data already patched. ConfigLines locks Year (written as Year=0 in the
-        // loader ini) so the loader does not re-shift the already-patched exe.
-        internal static readonly Database May2026Database = new Database("may2026_database", "May 2026 (26/27)", Resources.may2026_data_patched, true, Resources.cm0102_2026_exe, May2026ConfigLines);
-        // Same May 2026 squads but starting season 2025/26 (Euro) / Brazil 2026 (December 2025 start),
-        // so the 2026 World Cup falls at the end of the first season and is playable.
-        internal static readonly Database May2026Season2526Database = new Database("may2026_2526_database", "May 2026 (25/26)", Resources.may2026_2526_data_patched, true, Resources.cm0102_2025_exe, May2026Season2526ConfigLines);
         // GSLP (GS Leagues Patch) x May-2026 transplant datasets. Both share one data zip
         // (Resources.gslp_data, no marker inside - SetupDatabase writes the detector file);
         // the exes are pre-patched (re-year + WC-2026 field on the 2025 one + fixes), so the
@@ -178,7 +129,7 @@ namespace CM0102_Starter_Kit {
         internal static readonly Database Gslp2627Database = new Database("gslp_2627_database", "26/27 (2027)", Resources.gslp_data, true, Resources.cm0102_gslp2026_exe, GslpConfigLines("2026"));
 
         internal static readonly List<Database> Databases = new List<Database> {
-            OriginalDatabase, PatchedDatabase, May2026Database, May2026Season2526Database, Gslp2526Database, Gslp2627Database
+            PatchedDatabase, Gslp2526Database, Gslp2627Database
         };
 
         internal static bool IsGslpDatabase(Database database) {
@@ -203,7 +154,7 @@ namespace CM0102_Starter_Kit {
             }
         }
 
-        internal static List<string> GetDefaultConfigFileLines(string configFile, Database database, bool copyForAndroid) {
+        internal static List<string> GetDefaultConfigFileLines(string configFile, Database database) {
             string[] existingLines = File.ReadAllLines(configFile);
             List<string> newLines = new List<string>();
 
@@ -215,8 +166,6 @@ namespace CM0102_Starter_Kit {
                     } else {
                         newLines.Add(configLine.Name + " = " + configLine.Value);
                     }
-                } else if (copyForAndroid && AndroidConfigLines.TryGetValue(currentLine, out ConfigLine androidConfigLine)) {
-                    newLines.Add(androidConfigLine.Name + " = " + androidConfigLine.Value);
                 } else {
                     newLines.Add(existingLines[currentLine - 1]);
                 }

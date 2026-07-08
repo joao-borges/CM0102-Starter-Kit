@@ -9,13 +9,11 @@
         private void InitializeComponent() {
             this.switch_update = new System.Windows.Forms.Button();
             this.install_var = new System.Windows.Forms.Button();
-            this.nick_patcher = new System.Windows.Forms.Button();
             this.editor = new System.Windows.Forms.Button();
             this.play_game = new System.Windows.Forms.Button();
             this.backup_saves = new System.Windows.Forms.Button();
             this.cm_scout = new System.Windows.Forms.Button();
             this.player_finder = new System.Windows.Forms.Button();
-            this.android_menu = new System.Windows.Forms.Button();
             this.restore_saves = new System.Windows.Forms.Button();
             this.cm_explorer = new System.Windows.Forms.Button();
             this.restoreSaveDialog = new System.Windows.Forms.OpenFileDialog();
@@ -61,26 +59,6 @@
             this.install_var.UseVisualStyleBackColor = false;
             this.install_var.Click += new System.EventHandler(this.InstallVar_Click);
             // 
-            // nick_patcher
-            // 
-            this.nick_patcher.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.nick_patcher.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.nick_patcher.FlatAppearance.BorderColor = System.Drawing.Color.Blue;
-            this.nick_patcher.FlatAppearance.BorderSize = 2;
-            this.nick_patcher.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.nick_patcher.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(66)))));
-            this.nick_patcher.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.nick_patcher.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
-            this.nick_patcher.ForeColor = System.Drawing.Color.White;
-            this.nick_patcher.Location = new System.Drawing.Point(120, 211);
-            this.nick_patcher.Margin = new System.Windows.Forms.Padding(0);
-            this.nick_patcher.Name = "nick_patcher";
-            this.nick_patcher.Size = new System.Drawing.Size(327, 65);
-            this.nick_patcher.TabIndex = 2;
-            this.nick_patcher.Text = "Nick\'s Patcher";
-            this.nick_patcher.UseVisualStyleBackColor = false;
-            this.nick_patcher.Click += new System.EventHandler(this.NickPatcher_Click);
-            // 
             // editor
             // 
             this.editor.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
@@ -112,7 +90,7 @@
             this.play_game.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.play_game.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
             this.play_game.ForeColor = System.Drawing.Color.White;
-            this.play_game.Location = new System.Drawing.Point(120, 278);
+            this.play_game.Location = new System.Drawing.Point(120, 211);
             this.play_game.Margin = new System.Windows.Forms.Padding(0);
             this.play_game.Name = "play_game";
             this.play_game.Size = new System.Drawing.Size(327, 65);
@@ -132,7 +110,7 @@
             this.backup_saves.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.backup_saves.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
             this.backup_saves.ForeColor = System.Drawing.Color.White;
-            this.backup_saves.Location = new System.Drawing.Point(120, 412);
+            this.backup_saves.Location = new System.Drawing.Point(120, 345);
             this.backup_saves.Margin = new System.Windows.Forms.Padding(0);
             this.backup_saves.Name = "backup_saves";
             this.backup_saves.Size = new System.Drawing.Size(327, 65);
@@ -152,7 +130,7 @@
             this.cm_scout.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cm_scout.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
             this.cm_scout.ForeColor = System.Drawing.Color.White;
-            this.cm_scout.Location = new System.Drawing.Point(120, 345);
+            this.cm_scout.Location = new System.Drawing.Point(120, 278);
             this.cm_scout.Margin = new System.Windows.Forms.Padding(0);
             this.cm_scout.Name = "cm_scout";
             this.cm_scout.Size = new System.Drawing.Size(327, 65);
@@ -172,7 +150,7 @@
             this.player_finder.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.player_finder.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
             this.player_finder.ForeColor = System.Drawing.Color.White;
-            this.player_finder.Location = new System.Drawing.Point(449, 345);
+            this.player_finder.Location = new System.Drawing.Point(449, 278);
             this.player_finder.Margin = new System.Windows.Forms.Padding(0);
             this.player_finder.Name = "player_finder";
             this.player_finder.Size = new System.Drawing.Size(327, 65);
@@ -180,26 +158,6 @@
             this.player_finder.Text = "Generated Player Finder";
             this.player_finder.UseVisualStyleBackColor = false;
             this.player_finder.Click += new System.EventHandler(this.PlayerFinder_Click);
-            // 
-            // android_menu
-            // 
-            this.android_menu.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.android_menu.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.android_menu.FlatAppearance.BorderColor = System.Drawing.Color.Blue;
-            this.android_menu.FlatAppearance.BorderSize = 2;
-            this.android_menu.FlatAppearance.MouseDownBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.android_menu.FlatAppearance.MouseOverBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(66)))));
-            this.android_menu.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.android_menu.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
-            this.android_menu.ForeColor = System.Drawing.Color.White;
-            this.android_menu.Location = new System.Drawing.Point(449, 278);
-            this.android_menu.Margin = new System.Windows.Forms.Padding(0);
-            this.android_menu.Name = "android_menu";
-            this.android_menu.Size = new System.Drawing.Size(327, 65);
-            this.android_menu.TabIndex = 5;
-            this.android_menu.Text = "Android";
-            this.android_menu.UseVisualStyleBackColor = false;
-            this.android_menu.Click += new System.EventHandler(this.AndroidMenu_Click);
             // 
             // restore_saves
             // 
@@ -212,7 +170,7 @@
             this.restore_saves.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.restore_saves.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
             this.restore_saves.ForeColor = System.Drawing.Color.White;
-            this.restore_saves.Location = new System.Drawing.Point(449, 412);
+            this.restore_saves.Location = new System.Drawing.Point(449, 345);
             this.restore_saves.Margin = new System.Windows.Forms.Padding(0);
             this.restore_saves.Name = "restore_saves";
             this.restore_saves.Size = new System.Drawing.Size(327, 65);
@@ -232,7 +190,7 @@
             this.cm_explorer.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.cm_explorer.Font = new System.Drawing.Font("Savile ExtraBold", 12.75F, System.Drawing.FontStyle.Bold);
             this.cm_explorer.ForeColor = System.Drawing.Color.White;
-            this.cm_explorer.Location = new System.Drawing.Point(236, 479);
+            this.cm_explorer.Location = new System.Drawing.Point(236, 412);
             this.cm_explorer.Margin = new System.Windows.Forms.Padding(0);
             this.cm_explorer.Name = "cm_explorer";
             this.cm_explorer.Size = new System.Drawing.Size(327, 65);
@@ -254,13 +212,11 @@
             this.Controls.Add(this.cm_explorer);
             this.Controls.Add(this.switch_update);
             this.Controls.Add(this.install_var);
-            this.Controls.Add(this.nick_patcher);
             this.Controls.Add(this.editor);
             this.Controls.Add(this.play_game);
             this.Controls.Add(this.backup_saves);
             this.Controls.Add(this.cm_scout);
             this.Controls.Add(this.player_finder);
-            this.Controls.Add(this.android_menu);
             this.Name = "MainMenu";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainMenu_FormClosed);
             this.Load += new System.EventHandler(this.MainMenu_Load);
@@ -271,13 +227,11 @@
         #endregion
         private System.Windows.Forms.Button switch_update;
         private System.Windows.Forms.Button install_var;
-        private System.Windows.Forms.Button nick_patcher;
         private System.Windows.Forms.Button editor;
         private System.Windows.Forms.Button play_game;
         private System.Windows.Forms.Button backup_saves;
         private System.Windows.Forms.Button cm_scout;
         private System.Windows.Forms.Button player_finder;
-        private System.Windows.Forms.Button android_menu;
         private System.Windows.Forms.Button restore_saves;
         private System.Windows.Forms.Button cm_explorer;
         private System.Windows.Forms.OpenFileDialog restoreSaveDialog;

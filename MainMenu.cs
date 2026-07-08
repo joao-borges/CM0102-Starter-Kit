@@ -16,16 +16,10 @@ namespace CM0102_Starter_Kit {
         : HidableForm
     #endif
     {
-        internal readonly NickPatcherMenu nickPatcherMenu;
         internal readonly VersionMenu versionMenu;
-        internal readonly PlayMenu playMenu;
-        internal readonly AndroidMenu androidMenu;
 
         public MainMenu() {
-            this.nickPatcherMenu = new NickPatcherMenu(this);
             this.versionMenu = new VersionMenu(this);
-            this.playMenu = new PlayMenu(this);
-            this.androidMenu = new AndroidMenu(this);
             InitialiseSharedControls("Setup Game", 373, false);
             InitializeComponent();
         }
@@ -34,10 +28,8 @@ namespace CM0102_Starter_Kit {
             return new List<Button> {
                 this.switch_update,
                 this.install_var,
-                this.nick_patcher,
                 this.editor,
                 this.play_game,
-                this.android_menu,
                 this.cm_scout,
                 this.player_finder,
                 this.backup_saves,
@@ -91,14 +83,6 @@ namespace CM0102_Starter_Kit {
             DisplayMessage(result);
         }
 
-        private void NickPatcher_Click(object sender, EventArgs e) {
-            if (DataFolderExists()) {
-                ShowNewScreen(nickPatcherMenu);
-            } else {
-                DisplayMessage(SwitchUpdateMessage);
-            }
-        }
-
         private void Editor_Click(object sender, EventArgs e) {
             if (DataFolderExists()) {
                 RunExternalProcess(DataFolder, Path.Combine(GameFolder, "Editor", "cm0102ed.exe"));
@@ -107,13 +91,41 @@ namespace CM0102_Starter_Kit {
             }
         }
 
+        // Launches the game directly via the loader with the default config - the loader
+        // options are managed per-database by SetupDatabase, so there is no play submenu.
         private void PlayGame_Click(object sender, EventArgs e) {
-            if (DataFolderExists()) {
-                playMenu.ShowOrHideRetroButton();
-                ShowNewScreen(playMenu);
-            } else {
+            if (!DataFolderExists()) {
                 DisplayMessage(SwitchUpdateMessage);
+                return;
             }
+            ShowLoader();
+
+            // Remove any temporary files that weren't removed since the last session
+            foreach (FileInfo tmpFile in new DirectoryInfo(GameFolder).GetFiles("*.tmp")) {
+                File.Delete(tmpFile.FullName);
+            }
+            foreach (FileInfo lngFile in new DirectoryInfo(GameFolder).GetFiles("*.lng")) {
+                File.Delete(lngFile.FullName);
+            }
+
+            File.WriteAllBytes(Path.Combine(GameFolder, Cm0102ExeFilename), CurrentDatabase().ExeFile);
+            ProcessStartInfo playPsi = new ProcessStartInfo {
+                WorkingDirectory = GameFolder,
+                FileName = Path.Combine(GameFolder, CmLoaderExeFilename),
+                UseShellExecute = false,
+                Arguments = CmLoaderConfigFilename
+            };
+            Process playProcess = Process.Start(playPsi);
+            playProcess.WaitForExit();
+            playProcess.Close();
+
+            // The loader is a stub process for the game, so let's wait for the game to be closed
+            foreach (Process process in Process.GetProcessesByName("cm0102")) {
+                process.WaitForExit();
+                process.Close();
+            }
+            File.WriteAllBytes(Path.Combine(GameFolder, Cm0102ExeFilename), Resources.cm0102_exe);
+            HideLoader();
         }
 
         private void BackupSaves_Click(object sender, EventArgs e) {
@@ -176,14 +188,6 @@ namespace CM0102_Starter_Kit {
             }
             // Working directory is the Game folder, where the .sav files live
             RunExternalProcess(GameFolder, cmExplorerExe);
-        }
-
-        private void AndroidMenu_Click(object sender, EventArgs e) {
-            if (DataFolderExists()) {
-                ShowNewScreen(androidMenu);
-            } else {
-                DisplayMessage(SwitchUpdateMessage);
-            }
         }
 
         private void MainMenu_Load(object sender, EventArgs e) {

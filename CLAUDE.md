@@ -34,7 +34,7 @@ At runtime everything lives under a `Game/` folder next to the exe (`Helper.Game
 
 ### Form navigation
 - Entry point: `Program.cs` → `MainMenu` (a Form).
-- `MainMenu` constructs all sub-menus as singletons (`nickPatcherMenu`, `versionMenu`, `playMenu`, `androidMenu`) and holds references to them; sub-menus hold a back-reference to `mainMenu`, which is how they call into each other (e.g. `NickPatcherMenu` calls `mainMenu.versionMenu.SetupDatabase(...)`).
+- This fork has TWO screens only: `MainMenu` and `VersionMenu` (Data Updates). The upstream `NickPatcherMenu`, `PlayMenu` and `AndroidMenu` forms were REMOVED (2026-07-08): the shipped GSLP databases bake all patcher options via `ConfigLines`, the Play button launches the game directly (Standard/default-ini path only), and the Android flow is gone.
 - Navigation is `ShowNewScreen(form)` in `HidableForm`: hide current, reposition next form to the same location/size, show it. The "Back" button returns to `mainMenu`. Forms are never disposed/recreated.
 
 ### The `#if DEBUG` base-class swap (every menu form)
@@ -55,20 +55,18 @@ Static class (imported via `using static`) holding all path constants and the **
 - The active database is detected at runtime by a marker file `Game/Data/<database.Name>.txt` (`CurrentDatabase()`); a custom-loaded database falls back to `CustomDatabase`.
 
 ### Loader config files are line-number-indexed (key coupling/gotcha)
-`CM0102LoaderDefault.ini` / `CM0102LoaderCustom.ini` are read/written **by 1-based line number**, not by key. This coupling is spread across:
-- `Helper.ConfigLine` / the per-database `ConfigLines` dictionaries (`{ lineNumber → (name, value) }`) and `AndroidConfigLines`.
-- `NickPatcherMenu`'s `GetComboBoxes()`/`GetNumericUpDowns()`/`GetCheckBoxes()` which map each UI control to a specific line number, and `Apply_Click` which **rewrites the entire file as an ordered `List<string>`** in fixed line order.
+`CM0102LoaderDefault.ini` / `CM0102LoaderCustom.ini` are read/written **by 1-based line number**, not by key, via `Helper.ConfigLine` / the per-database `ConfigLines` dictionaries (`{ lineNumber → (name, value) }`). `VersionMenu.UpdateConfigFiles` rewrites both files on every database switch; unforced lines carry their previous values over, except line 16 (`PatchFileDirectory`) which is normalized back to "." in the default ini for databases that don't force it.
+Year is special-cased: a forced custom year is written as `Year = 0` in the file (the loader must not re-shift a pre-patched exe).
+**GSLP gotcha:** the GSLP exes ship with most Nick/Tapani patches PRE-BAKED by GS (coloured attributes, 9 subs, regen fixes, load-all-players, unprotected contracts). Their `ConfigLines` write these as `false` — re-applying loader patches on top of the modified exe corrupts it (e.g. the HiddenAttributes patch cave lands on GS's extended data tables → crash opening any player profile). Only byte-verified-clean patches are enabled (`HideNonPublicBids` + the `NoForeignRestrictionsForAll.patch` file, managed by `SetupDatabase`).
 
-If the loader ini format changes, all of these line numbers must move together. A database's `ConfigLines` entry both forces a value and **locks the corresponding UI control** (disabled + shown as set) — this is how era databases (1989/1993/etc.) pin the starting Year and hide options that are already baked into their custom exe. Year is special-cased: a forced custom year is written as `Year = 0` in the file.
-
-### Database switching & year-specific datasets
-`VersionMenu.SetupDatabase` extracts the prerequisite (if any) then the chosen database zip into `Game/Data` (preserving `Fonts/`), copies fonts, and rewrites both ini files. Some real-world databases need a different underlying dataset depending on the chosen **starting year** — `GetPatchedDatabase` swaps e.g. `OctoberDatabase` → `OctoberDatabasePatched` when year 2021 is selected, and `NickPatcherMenu.Apply_Click` re-runs `SetupDatabase` to switch datasets when the year changes. The Reading/Derby `PointsDeductions.patch` is added/removed based on this same condition.
+### Database switching
+`VersionMenu.SetupDatabase` extracts the prerequisite (if any) then the chosen database zip into `Game/Data` (preserving `Fonts/`), writes the database detector file if the zip didn't contain one (the two GSLP databases share one zip), manages the GSLP patch files in `Game/Patches`, copies fonts, and rewrites both ini files. Shipped databases: `Patched (3.9.68)`, `25/26 (2026)` and `26/27 (2027)` (GSLP × May-2026 transplant, pre-patched exes) + save/load custom.
 
 ### Patches
 Patch files (`*.patch`) live in `Game/Patches/Optional/` and `Game/Patches/Misc/`. The patcher copies the desired ones into `Game/Patches/` (which the loader auto-loads) and deletes them when unchecked. "Miscellaneous Patches" = copy all of `Patches/Misc/`. Detection on form load is presence-based (file exists → checkbox ticked; >6 patch files → Misc enabled).
 
 ### Launching the game
-`PlayMenu.PlayButton_Click` writes the appropriate exe into `Game/cm0102.exe`, then starts `CM0102Loader.exe` (a stub) with the ini filename as argument — Default ini for "Standard", Custom ini for "Nick's Patcher". It then waits on the spawned `cm0102` process, and on exit restores the default exe. Other tools (editor, CM Scout, GPF2) are launched directly via `RunExternalProcess`.
+`MainMenu.PlayGame_Click` writes the current database's exe into `Game/cm0102.exe`, starts `CM0102Loader.exe` (a stub) with the Default ini as argument, waits on the spawned `cm0102` process, and on exit restores the stock exe. Other tools (editor, CM Scout, GPF2, CM Explorer) are launched via `RunExternalProcess`; CM Explorer is embedded as `cmexplorer.zip` and extracted to `Game/CMExplorer` on first use (needs uncompressed saves).
 
 ### Win32 interop
 `CentreMessageBox.cs` uses P/Invoke (`EnumThreadWindows`, `MoveWindow`, …) to recentre native message boxes over the (non-modal) parent form. Windows-only by nature.

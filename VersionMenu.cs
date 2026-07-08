@@ -23,12 +23,9 @@ namespace CM0102_Starter_Kit {
 
         protected override List<Button> GetButtons() {
             return new List<Button> {
-                this.original_database,
-                this.patched_database,
-                this.may2026_database,
-                this.may2026_2526_database,
                 this.gslp_2526_database,
                 this.gslp_2627_database,
+                this.patched_database,
                 this.save_database,
                 this.load_database
             };
@@ -36,7 +33,7 @@ namespace CM0102_Starter_Kit {
 
         private void UpdateConfigFiles(Database database) {
             string defaultConfig = Path.Combine(GameFolder, CmLoaderConfigFilename);
-            List<string> defaultLines = GetDefaultConfigFileLines(defaultConfig, database, false);
+            List<string> defaultLines = GetDefaultConfigFileLines(defaultConfig, database);
             // The GSLP databases force PatchFileDirectory (line 16) so the Standard play path
             // auto-loads Game/Patches; restore the stock value for databases that don't force
             // it, as GetDefaultConfigFileLines otherwise carries the old value over.
@@ -46,13 +43,17 @@ namespace CM0102_Starter_Kit {
             WriteToFile(defaultLines, defaultConfig);
 
             string customConfig = Path.Combine(GameFolder, CmLoaderCustomConfigFilename);
-            List<string> customLines = GetDefaultConfigFileLines(customConfig, database, false);
+            List<string> customLines = GetDefaultConfigFileLines(customConfig, database);
             WriteToFile(customLines, customConfig);
         }
 
         private void DeleteDatabaseDetectorFiles() {
             foreach (Database database in Databases) {
                 File.Delete(Path.Combine(DataFolder, database.Name + ".txt"));
+            }
+            // Marker files of databases this fork no longer ships
+            foreach (string legacyName in new[] { "original_database", "may2026_database", "may2026_2526_database", "cm89_database", "cm93_database", "cm95_database", "cm3_database" }) {
+                File.Delete(Path.Combine(DataFolder, legacyName + ".txt"));
             }
         }
 
