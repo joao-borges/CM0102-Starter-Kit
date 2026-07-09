@@ -44,6 +44,9 @@ namespace CM0102_Starter_Kit {
             } else {
                 this.install_var.Text = "Install VAR Commentary";
             }
+            // Always show which database the Play button will launch - saves are only
+            // compatible with the database/exe they were created with
+            this.play_game.Text = DataFolderExists() ? "Play " + CurrentDatabase().Label : "Play Game";
         }
 
         private void RefreshExeFile(ProgressWindow progressWindow) {
@@ -126,6 +129,7 @@ namespace CM0102_Starter_Kit {
             }
             File.WriteAllBytes(Path.Combine(GameFolder, Cm0102ExeFilename), Resources.cm0102_exe);
             HideLoader();
+            RefreshForm();
         }
 
         private void BackupSaves_Click(object sender, EventArgs e) {

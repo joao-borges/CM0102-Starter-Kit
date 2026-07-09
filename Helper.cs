@@ -60,7 +60,10 @@ namespace CM0102_Starter_Kit {
         // GS ships Nick's patch with his own palette, user-confirmed rendering) or GS baked
         // his OWN variant at those sites (regen fixes, load-all-players) - the loader
         // blindly overwriting his code corrupts the exe (the original player-screen crash).
-        // 9 subs is pre-baked; hidden attributes + foreign limits ship as patch files.
+        // 9 subs is pre-baked; foreign limits ships as a patch file. HiddenAttributes
+        // (extra attribute columns) is byte-compatible but CRASHES the GSLP exe at runtime
+        // on save-load/squad screens (user-confirmed A/B, 2026-07-08) - do NOT re-add it;
+        // porting it would need real RE of GS's screen changes.
         private static Dictionary<int, ConfigLine> GslpConfigLines(string year) {
             return new Dictionary<int, ConfigLine> {
                 { 1, new ConfigLine(1, "Year", year) },
@@ -82,7 +85,7 @@ namespace CM0102_Starter_Kit {
         }
 
         internal static readonly List<string> GslpPatchFiles = new List<string> {
-            "NoForeignRestrictionsForAll.patch", "HiddenAttributes.patch"
+            "NoForeignRestrictionsForAll.patch"
         };
 
 
