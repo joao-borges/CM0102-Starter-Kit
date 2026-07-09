@@ -61,9 +61,11 @@ namespace CM0102_Starter_Kit {
         // his OWN variant at those sites (regen fixes, load-all-players) - the loader
         // blindly overwriting his code corrupts the exe (the original player-screen crash).
         // 9 subs is pre-baked; foreign limits ships as a patch file. HiddenAttributes
-        // (extra attribute columns) is byte-compatible but CRASHES the GSLP exe at runtime
-        // on save-load/squad screens (user-confirmed A/B, 2026-07-08) - do NOT re-add it;
-        // porting it would need real RE of GS's screen changes.
+        // (extra attribute columns) is BAKED into the GSLP exes at file offsets
+        // (CM0102Patcher tools/gslp_hiddencols.py): the loader .patch variant must NEVER
+        // be applied on top - the loader writes the cave at base+RVA (0xADC000 = live GS
+        // runtime BSS -> save-load/squad crash, user-confirmed A/B 2026-07-08) instead of
+        // the VA 0xDE7000 the hook expects.
         private static Dictionary<int, ConfigLine> GslpConfigLines(string year) {
             return new Dictionary<int, ConfigLine> {
                 { 1, new ConfigLine(1, "Year", year) },

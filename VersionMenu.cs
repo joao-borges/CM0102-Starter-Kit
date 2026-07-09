@@ -104,8 +104,9 @@ namespace CM0102_Starter_Kit {
                 foreach (string patchFile in GslpPatchFiles) {
                     File.Copy(Path.Combine(OptionalPatchesFolder, patchFile), Path.Combine(PatchesFolder, patchFile), true);
                 }
-                // 9 subs is pre-baked in the GSLP exes and HiddenAttributes crashes them
-                // on save-load/squad screens - remove strays of both
+                // 9 subs and HiddenAttributes are baked into the GSLP exes; the loader
+                // .patch variant of HiddenAttributes writes the cave at the wrong VA on
+                // GSLP (crashes save-load/squad screens) - remove strays of both
                 foreach (string patchFile in new[] { "IncreaseToNineSubs.patch", "HiddenAttributes.patch" }) {
                     string legacyPatchFile = Path.Combine(PatchesFolder, patchFile);
                     if (File.Exists(legacyPatchFile)) {
