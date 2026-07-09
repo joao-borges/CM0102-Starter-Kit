@@ -22,7 +22,7 @@ Unlike the upstream repo (which gitignores them), **this fork tracks all binary 
 - `data/*.zip` — the database/data-update payloads (`original_data`, `patched_data`, `october_data`, plus this fork's `may2026_data_patched` / `may2026_2526_data_patched`).
 - `external/Game.zip` — the entire game tree extracted on first run. **Stored split** as `external/Game.zip.part-*` because it exceeds GitHub's 100 MB file limit; before building, reassemble it: `./external/reassemble-game-zip.sh` (or `cat external/Game.zip.part-* > external/Game.zip`). The joined file itself stays gitignored.
 - `external/Files/*.exe` — the game executables (`cm0102.exe` plus year-specific variants `cm0102_oct.exe`, `cm0102_2025.exe`, `cm0102_2026.exe`, …). Note two placeholders: `cm89_retro.exe` is a copy of `cm89.exe` (the shipped v1.2.2 exe these assets were recovered from predates the real one) and `dotNetFx40setup.exe` is a zero-byte stub (Windows-only bootstrap, unused).
-- `external/events_eng.cfg`, `images/*.jpg`, and `packages/` (SharpZipLib 0.86.0 + ILMerge props, force-added so no NuGet restore is needed).
+- `images/*.jpg` and `packages/` (SharpZipLib 0.86.0 + ILMerge props, force-added so no NuGet restore is needed).
 
 Resource names referenced in code (e.g. `Resources.october_data`, `Resources.cm0102_exe`) map to files under these folders. The 2025/2026 game exes and May-2026 data zips were produced with the sibling `CM0102Patcher` fork's headless harness (see that repo's CLAUDE.md).
 

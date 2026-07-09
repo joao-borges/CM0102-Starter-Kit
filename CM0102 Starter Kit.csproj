@@ -132,7 +132,6 @@
     <None Include="app.manifest" />
     <None Include="data\patched_data.zip" />
     <None Include="data\gslp_data.zip" />
-    <None Include="external\events_eng.cfg" />
     <None Include="external\Game.zip" />
     <None Include="external\Files\cm0102.exe" />
     <None Include="external\Files\cm0102_gslp2025.exe" />

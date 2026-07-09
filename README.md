@@ -37,7 +37,6 @@ Saves embed their own database, but they must be run with the **matching executa
 ## Main menu
 
 - **Data Updates** — switch databases (see above).
-- **Install VAR Commentary** — adds VAR-related commentary lines (English only); press again to uninstall. Credit to samsami.
 - **Official Editor** — launches the official data editor with the right permissions/compatibility settings. Make sure it points at the Starter Kit's own `Game/Data` folder.
 - **Play Game** — writes the active database's executable and launches the game through Nick's loader. The button label shows the active database.
 - **Backup / Restore Save Games** — copies your saves to `CM0102 Backups` on the Desktop and back. Restoring overwrites same-named saves, so take care.

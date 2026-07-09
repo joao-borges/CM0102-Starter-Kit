@@ -14,8 +14,6 @@ namespace CM0102_Starter_Kit {
         internal static readonly string CmLoaderCustomConfigFilename = "CM0102LoaderCustom.ini";
         internal static readonly string Cm0102ExeFilename = "cm0102.exe";
         internal static readonly string CmLoaderExeFilename = "CM0102Loader.exe";
-        internal static readonly string ExistingCommentary = Path.Combine(DataFolder, "events_eng.cfg");
-        internal static readonly string ExistingCommentaryBackup = Path.Combine(DataFolder, "events_eng.cfg.bk");
         internal static readonly string PlayerSetupFilename = "player_setup.cfg";
         internal static readonly string BackupSavesFolder = Path.Combine(Environment.GetFolderPath(System.Environment.SpecialFolder.DesktopDirectory), "CM0102 Backups");
         internal static readonly string CustomDatabasesFolder = Path.Combine(GameFolder, "Custom Databases");

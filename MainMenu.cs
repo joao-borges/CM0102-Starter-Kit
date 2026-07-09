@@ -27,7 +27,6 @@ namespace CM0102_Starter_Kit {
         protected override List<Button> GetButtons() {
             return new List<Button> {
                 this.switch_update,
-                this.install_var,
                 this.editor,
                 this.play_game,
                 this.cm_scout,
@@ -39,11 +38,6 @@ namespace CM0102_Starter_Kit {
         }
 
         protected override void RefreshForm() {
-            if (File.Exists(ExistingCommentaryBackup)) {
-                this.install_var.Text = "Uninstall VAR Commentary";
-            } else {
-                this.install_var.Text = "Install VAR Commentary";
-            }
             // Always show which database the Play button will launch - saves are only
             // compatible with the database/exe they were created with
             this.play_game.Text = DataFolderExists() ? "Play " + CurrentDatabase().Label : "Play Game";
@@ -67,23 +61,6 @@ namespace CM0102_Starter_Kit {
 
         private void SwitchUpdate_Click(object sender, EventArgs e) {
             ShowNewScreen(versionMenu);
-        }
-
-        private void InstallVar_Click(object sender, EventArgs e) {
-            string result = SwitchUpdateMessage;
-            if (DataFolderExists()) {
-                if (File.Exists(ExistingCommentaryBackup)) {
-                    File.Delete(ExistingCommentary);
-                    File.Move(ExistingCommentaryBackup, ExistingCommentary);
-                    result = "VAR Commentary successfully uninstalled!";
-                } else {
-                    File.Move(ExistingCommentary, ExistingCommentaryBackup);
-                    File.WriteAllBytes(ExistingCommentary, Resources.events_eng);
-                    result = "VAR Commentary successfully installed! Please note this only applies when playing the game in English!";
-                }
-                RefreshForm();
-            }
-            DisplayMessage(result);
         }
 
         private void Editor_Click(object sender, EventArgs e) {
