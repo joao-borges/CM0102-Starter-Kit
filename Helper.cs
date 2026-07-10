@@ -86,11 +86,13 @@ namespace CM0102_Starter_Kit {
 
         internal static readonly List<string> GslpPatchFiles = new List<string> {
             "NoForeignRestrictionsForAll.patch",
-            // Null-club/all-leagues protections (Database.cpp 17353 class). GS pre-baked
-            // 2 of the 5 fixes in the GSLP exes; the other 3 sites are byte-verified
-            // stock, so the loader patch applies cleanly (re-writing the baked sites
-            // with identical bytes).
-            "ProtectionPatches.patch"
+            // Null-club/all-leagues protections. GS pre-baked 2 of the 5 fixes in the
+            // GSLP exes; the other 3 sites are byte-verified stock, so the loader patch
+            // applies cleanly (re-writing the baked sites with identical bytes).
+            "ProtectionPatches.patch",
+            // The Database.cpp 17353 null-club check returns safely but spams a dialog
+            // on all-leagues saves; this silences just the popup (site == stock bytes).
+            "SilenceDatabase17353.patch"
         };
 
 
