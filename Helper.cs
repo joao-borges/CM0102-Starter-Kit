@@ -92,7 +92,10 @@ namespace CM0102_Starter_Kit {
             "ProtectionPatches.patch",
             // The Database.cpp 17353 null-club check returns safely but spams a dialog
             // on all-leagues saves; this silences just the popup (site == stock bytes).
-            "SilenceDatabase17353.patch"
+            "SilenceDatabase17353.patch",
+            // usa_mls.cpp 1819: the engine hardcodes 12 stock MLS clubs; modern-MLS
+            // clubs asserted nonstop. Fallback assigns them club-id % 3 conferences.
+            "MlsConferenceFallback.patch"
         };
 
 
