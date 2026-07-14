@@ -174,7 +174,7 @@
             this.cm_explorer.Name = "cm_explorer";
             this.cm_explorer.Size = new System.Drawing.Size(327, 65);
             this.cm_explorer.TabIndex = 3;
-            this.cm_explorer.Text = "CM Explorer (Save Editor)";
+            this.cm_explorer.Text = "Save Editor";
             this.cm_explorer.UseVisualStyleBackColor = false;
             this.cm_explorer.Click += new System.EventHandler(this.CmExplorer_Click);
             //

@@ -157,6 +157,12 @@ namespace CM0102_Starter_Kit {
         }
 
         private void CmExplorer_Click(object sender, EventArgs e) {
+            // Built-in editor (club finances); CM Explorer remains available from
+            // inside it for the record types the built-in editor doesn't cover yet
+            new SaveEditorForm(LaunchCmExplorer).ShowDialog(this);
+        }
+
+        private void LaunchCmExplorer() {
             string cmExplorerFolder = Path.Combine(GameFolder, "CMExplorer");
             string cmExplorerExe = Path.Combine(cmExplorerFolder, "CMExplorer.exe");
             // CM Explorer is embedded as a zip and extracted on first use

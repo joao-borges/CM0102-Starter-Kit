@@ -42,7 +42,7 @@ Saves embed their own database, but they must be run with the **matching executa
 - **Backup / Restore Save Games** — copies your saves to `CM0102 Backups` on the Desktop and back. Restoring overwrites same-named saves, so take care.
 - **CM Scout** — launches CM Scout for finding players outside the in-game scouting. Some say it ruins the game a bit; use with caution!
 - **Generated Player Finder** — launches GPF2, which tracks which past players your save's regens correspond to (run it against a save as early as possible).
-- **CM Explorer (Save Editor)** — launches CM Explorer 1.2 to browse and edit saved games. It needs **uncompressed** saves: untick "Compress Save Game Files" in the in-game options before saving. Note CM Explorer is officially a CM 00/01 tool — treat it as experimental on 01/02 saves.
+- **Save Editor** — built-in editor for saved games (uncompressed saves only). Phase 1 edits club finances safely (values are written to every field the engine reads and clamped to overflow-safe ranges, with an automatic backup per save). For player/staff editing it can still launch the legacy CM Explorer 1.2 — a CM 00/01 tool, so treat that part as experimental, and keep money edits in the built-in editor.
 
 ## Mac notes
 
