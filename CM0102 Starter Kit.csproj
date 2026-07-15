@@ -77,7 +77,11 @@
       <DependentUpon>ProgressWindow.cs</DependentUpon>
     </Compile>
     <Compile Include="Helper.cs" />
+    <Compile Include="ListViewColumnSorter.cs" />
     <Compile Include="SaveGame.cs" />
+    <Compile Include="StaffPickerDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="SaveEditorForm.cs">
       <SubType>Form</SubType>
     </Compile>

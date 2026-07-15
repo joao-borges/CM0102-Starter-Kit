@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -22,9 +23,12 @@ namespace CM0102_Starter_Kit {
         TextBox balanceBox, bankBox;
         Button writeButton;
         SaveGame.Club selectedClub;
+        readonly ListViewColumnSorter clubSorter = new ListViewColumnSorter();
         // players tab
-        TextBox playerSearch, playerClubFilter, playerNationFilter;
+        TextBox playerSearch;
+        ComboBox playerClubFilter, playerNationFilter;
         ListView playerList;
+        readonly ListViewColumnSorter playerSorter = new ListViewColumnSorter();
         readonly Action launchLegacyExplorer;
 
         public SaveEditorForm(Action launchLegacyExplorer) {
@@ -83,6 +87,8 @@ namespace CM0102_Starter_Kit {
             this.clubList.Columns.Add("Balance", 100, HorizontalAlignment.Right);
             this.clubList.Columns.Add("Bank", 90, HorizontalAlignment.Right);
             this.clubList.SelectedIndexChanged += (s, e) => ShowSelectedClub();
+            this.clubList.ListViewItemSorter = this.clubSorter;
+            this.clubList.ColumnClick += (s, e) => this.clubSorter.HandleColumnClick(this.clubList, e.Column);
 
             GroupBox money = new GroupBox {
                 Text = "Club money",
@@ -117,18 +123,27 @@ namespace CM0102_Starter_Kit {
             page.Controls.AddRange(new Control[] { searchLabel, this.clubSearch, this.clubList, money, this.writeButton, legacy });
         }
 
+        static ComboBox MakeFilterCombo(int x, int width) {
+            return new ComboBox {
+                DropDownStyle = ComboBoxStyle.DropDown,
+                AutoCompleteMode = AutoCompleteMode.SuggestAppend,
+                AutoCompleteSource = AutoCompleteSource.ListItems,
+                Location = new Point(x, 10), Width = width
+            };
+        }
+
         void BuildPlayersPage(TabPage page) {
             Label searchLabel = new Label { Text = "Name:", AutoSize = true, Location = new Point(10, 13) };
             this.playerSearch = new TextBox { Location = new Point(58, 10), Width = 180 };
             this.playerSearch.TextChanged += (s, e) => RefreshPlayerList();
             Label clubLabel = new Label { Text = "Club:", AutoSize = true, Location = new Point(252, 13) };
-            this.playerClubFilter = new TextBox { Location = new Point(292, 10), Width = 160 };
+            this.playerClubFilter = MakeFilterCombo(292, 190);
             this.playerClubFilter.TextChanged += (s, e) => RefreshPlayerList();
-            Label nationLabel = new Label { Text = "Nation:", AutoSize = true, Location = new Point(466, 13) };
-            this.playerNationFilter = new TextBox { Location = new Point(518, 10), Width = 130 };
+            Label nationLabel = new Label { Text = "Nation:", AutoSize = true, Location = new Point(496, 13) };
+            this.playerNationFilter = MakeFilterCombo(548, 150);
             this.playerNationFilter.TextChanged += (s, e) => RefreshPlayerList();
             Label hint = new Label {
-                Text = "Fill any filter (3+ letters; nation 2+), then double-click a player to edit.",
+                Text = "Fill any filter (3+ letters; nation 2+), then double-click a player to edit. Click a column header to sort.",
                 AutoSize = true, Location = new Point(10, 405), ForeColor = Color.DimGray,
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
@@ -147,6 +162,8 @@ namespace CM0102_Starter_Kit {
             this.playerList.Columns.Add("PA", 46, HorizontalAlignment.Right);
             this.playerList.Columns.Add("Value", 95, HorizontalAlignment.Right);
             this.playerList.DoubleClick += (s, e) => EditSelectedPlayer();
+            this.playerList.ListViewItemSorter = this.playerSorter;
+            this.playerList.ColumnClick += (s, e) => this.playerSorter.HandleColumnClick(this.playerList, e.Column);
 
             page.Controls.AddRange(new Control[] { searchLabel, this.playerSearch, clubLabel, this.playerClubFilter, nationLabel, this.playerNationFilter, hint, this.playerList });
         }
@@ -177,6 +194,8 @@ namespace CM0102_Starter_Kit {
                 this.save = new SaveGame(Path.Combine(GameFolder, (string) this.saveSelector.SelectedItem));
                 this.save.Load();
                 this.status.Text = this.save.Clubs.Count.ToString("N0") + " clubs loaded from " + this.save.FileName + ".";
+                PopulateClubFilter();
+                this.playerNationFilter.Items.Clear();
                 RefreshClubList();
                 RefreshPlayerList();
             } catch (Exception exception) {
@@ -189,11 +208,26 @@ namespace CM0102_Starter_Kit {
             }
         }
 
+        void PopulateClubFilter() {
+            List<string> names = new List<string>();
+            foreach (SaveGame.Club club in this.save.Clubs) {
+                names.Add(club.LongName);
+            }
+            names.Sort(StringComparer.CurrentCultureIgnoreCase);
+            this.playerClubFilter.Items.Clear();
+            this.playerClubFilter.Items.AddRange(names.ToArray());
+            this.playerClubFilter.Text = "";
+        }
+
         void EnsurePlayersLoaded() {
             if (this.save == null || this.save.Players.Count > 0) return;
             try {
                 Cursor = Cursors.WaitCursor;
                 this.save.LoadPlayers();
+                this.playerNationFilter.Items.Clear();
+                foreach (SaveGame.Nation nation in this.save.Nations) {
+                    this.playerNationFilter.Items.Add(nation.Name);
+                }
                 this.status.Text = this.save.Players.Count.ToString("N0") + " players indexed.";
                 RefreshPlayerList();
             } catch (Exception exception) {

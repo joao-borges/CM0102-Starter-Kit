@@ -130,28 +130,62 @@ namespace CM0102_Starter_Kit {
         // ---------------- Players (layouts from CM0102Patcher Scouter/SaveReader) ----------------
         // staff.dat: 110-byte records. +0 id, +4/+8/+12 first/second/common name ids,
         // +16 DOB (day int16, year int16, leap int32), +26 nation, +30 second nation,
-        // +57 club id, +82 value, +97 player.dat id.
+        // +34/+35 international caps/goals (bytes), +57 club id, +82 value,
+        // +86..+93 mentals (bytes 0-20, alphabetical: Adaptability, Ambition,
+        // Determination, Loyalty, Pressure, Professionalism, Sportsmanship,
+        // Temperament), +97 player.dat id.
         // player.dat: 70-byte records. +0 id, +4 squad number, +5/+7 CA/PA,
         // +9/+11/+13 home/current/world reputation (int16), +15..+26 twelve position
-        // ratings, +27..+68 forty-two playing attributes (sbyte), +69 morale.
+        // ratings, +27..+68 forty-two playing attributes (sbyte), +69 morale (0-20).
         // Attribute bytes are CA-weighted intrinsics for a subset of attributes; the
         // in-game 1-20 value = f(intrinsic, CA) with goalkeeper-dependent branches.
+        // injury.dat: a fitness table of staff-count 31-byte records indexed by staff
+        // table index, then an event pool (not touched here). Fitness record: +8 int16
+        // fitness (0-10000), +10 int16 condition (0-10000), +18 injury type byte
+        // (0xff = healthy), +19 injury severity byte.
+        // Preferences.dat: 52-byte records indexed by staff id (table is SHORTER than
+        // staff.dat - always bounds-check): +0 id, then 12 int32s: fav clubs x3,
+        // disliked clubs x3, fav staff x3, disliked staff x3 (-1 = empty).
 
         public class PlayerRef {
+            public int StaffId;
             public int StaffBase;       // file offset of staff record
             public int PlayerBase;      // file offset of player record
             public int ContractBase;    // file offset of contract record (-1 if none)
+            public int FitnessBase;     // file offset of injury.dat fitness record (-1 if none)
+            public int PrefsBase;       // file offset of Preferences.dat record (-1 if none)
             public string Name;
             public string ClubName;
             public string Nation;
             public int Age;
         }
 
+        public class Nation {
+            public int Id;
+            public string Name;
+        }
+
+        public class StaffEntry {
+            public int Id;
+            public string Name;
+            public string ClubName;
+        }
+
         readonly List<PlayerRef> players = new List<PlayerRef>();
+        readonly List<Nation> nations = new List<Nation>();
+        readonly List<StaffEntry> staffDirectory = new List<StaffEntry>();
+        readonly Dictionary<int, string> staffNamesById = new Dictionary<int, string>();
         bool playersLoaded;
         int gameYear;
 
         public IList<PlayerRef> Players { get { return this.players; } }
+        public IList<Nation> Nations { get { return this.nations; } }
+        public IList<StaffEntry> StaffDirectory { get { return this.staffDirectory; } }
+
+        public string StaffNameById(int staffId) {
+            string name;
+            return this.staffNamesById.TryGetValue(staffId, out name) ? name : "";
+        }
 
         List<string> ReadNames(string blockName) {
             List<string> names = new List<string>();
@@ -186,8 +220,12 @@ namespace CM0102_Starter_Kit {
             Block nationBlock = this.blocks["nation.dat"];
             for (int record = 0; record < nationBlock.Size / 290; record++) {
                 int recordBase = nationBlock.Pos + record * 290;
-                nationNames[BitConverter.ToInt32(this.data, recordBase)] = ReadString(this.data, recordBase + 4, 50);
+                int nationId = BitConverter.ToInt32(this.data, recordBase);
+                string nationName = ReadString(this.data, recordBase + 4, 50);
+                nationNames[nationId] = nationName;
+                this.nations.Add(new Nation { Id = nationId, Name = nationName });
             }
+            this.nations.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.CurrentCultureIgnoreCase));
 
             // player.dat id -> record offset
             Block playerBlock = this.blocks["player.dat"];
@@ -213,30 +251,55 @@ namespace CM0102_Starter_Kit {
                 }
             }
 
+            // injury.dat fitness table: staff-count 31-byte records in staff table order
+            Block injuryBlock;
+            this.blocks.TryGetValue("injury.dat", out injuryBlock);
+            // Preferences.dat: 52-byte records indexed by staff id, may cover fewer
+            // staff than staff.dat does
+            Block prefsBlock;
+            this.blocks.TryGetValue("Preferences.dat", out prefsBlock);
+            int prefsCount = prefsBlock != null ? prefsBlock.Size / 52 : 0;
+
             Block staffBlock = this.blocks["staff.dat"];
-            for (int record = 0; record < staffBlock.Size / 110; record++) {
+            int staffCount = staffBlock.Size / 110;
+            for (int record = 0; record < staffCount; record++) {
                 int staffBase = staffBlock.Pos + record * 110;
-                int playerId = BitConverter.ToInt32(this.data, staffBase + 97);
-                int playerBase;
-                if (playerId < 0 || !playerOffsets.TryGetValue(playerId, out playerBase)) {
-                    continue;
-                }
                 int staffId = BitConverter.ToInt32(this.data, staffBase);
                 string commonName = NameAt(commonNames, BitConverter.ToInt32(this.data, staffBase + 12));
                 string name = commonName.Length > 0 ? commonName
                     : (NameAt(firstNames, BitConverter.ToInt32(this.data, staffBase + 4)) + " " +
                        NameAt(secondNames, BitConverter.ToInt32(this.data, staffBase + 8))).Trim();
                 int clubId = BitConverter.ToInt32(this.data, staffBase + 57);
+                string clubName;
+                if (!clubNames.TryGetValue(clubId, out clubName)) {
+                    clubName = "-";
+                }
+                this.staffNamesById[staffId] = name;
+                this.staffDirectory.Add(new StaffEntry { Id = staffId, Name = name, ClubName = clubName });
+
+                int playerId = BitConverter.ToInt32(this.data, staffBase + 97);
+                int playerBase;
+                if (playerId < 0 || !playerOffsets.TryGetValue(playerId, out playerBase)) {
+                    continue;
+                }
                 int nationId = BitConverter.ToInt32(this.data, staffBase + 26);
-                string clubName, nationName;
+                string nationName;
                 int birthYear = BitConverter.ToInt16(this.data, staffBase + 18);
                 int contractBase;
+                int fitnessBase = injuryBlock != null && (record + 1) * 31 <= injuryBlock.Size
+                    ? injuryBlock.Pos + record * 31 : -1;
+                int prefsBase = staffId >= 0 && staffId < prefsCount &&
+                    BitConverter.ToInt32(this.data, prefsBlock.Pos + staffId * 52) == staffId
+                    ? prefsBlock.Pos + staffId * 52 : -1;
                 this.players.Add(new PlayerRef {
+                    StaffId = staffId,
                     StaffBase = staffBase,
                     PlayerBase = playerBase,
                     ContractBase = contractOffsets.TryGetValue(staffId, out contractBase) ? contractBase : -1,
+                    FitnessBase = fitnessBase,
+                    PrefsBase = prefsBase,
                     Name = name,
-                    ClubName = clubNames.TryGetValue(clubId, out clubName) ? clubName : "-",
+                    ClubName = clubName,
                     Nation = nationNames.TryGetValue(nationId, out nationName) ? nationName : "-",
                     Age = birthYear > 1800 ? this.gameYear - birthYear : 0
                 });
