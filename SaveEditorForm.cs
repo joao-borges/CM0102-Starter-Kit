@@ -87,8 +87,7 @@ namespace CM0102_Starter_Kit {
             this.clubList.Columns.Add("Balance", 100, HorizontalAlignment.Right);
             this.clubList.Columns.Add("Bank", 90, HorizontalAlignment.Right);
             this.clubList.SelectedIndexChanged += (s, e) => ShowSelectedClub();
-            this.clubList.ListViewItemSorter = this.clubSorter;
-            this.clubList.ColumnClick += (s, e) => this.clubSorter.HandleColumnClick(this.clubList, e.Column);
+            this.clubList.ColumnClick += (s, e) => { this.clubSorter.HandleColumnClick(e.Column); RefreshClubList(); };
 
             GroupBox money = new GroupBox {
                 Text = "Club money",
@@ -162,8 +161,7 @@ namespace CM0102_Starter_Kit {
             this.playerList.Columns.Add("PA", 46, HorizontalAlignment.Right);
             this.playerList.Columns.Add("Value", 95, HorizontalAlignment.Right);
             this.playerList.DoubleClick += (s, e) => EditSelectedPlayer();
-            this.playerList.ListViewItemSorter = this.playerSorter;
-            this.playerList.ColumnClick += (s, e) => this.playerSorter.HandleColumnClick(this.playerList, e.Column);
+            this.playerList.ColumnClick += (s, e) => { this.playerSorter.HandleColumnClick(e.Column); RefreshPlayerList(); };
 
             page.Controls.AddRange(new Control[] { searchLabel, this.playerSearch, clubLabel, this.playerClubFilter, nationLabel, this.playerNationFilter, hint, this.playerList });
         }
@@ -238,8 +236,7 @@ namespace CM0102_Starter_Kit {
         }
 
         void RefreshClubList() {
-            this.clubList.BeginUpdate();
-            this.clubList.Items.Clear();
+            List<ListViewItem> rows = new List<ListViewItem>();
             if (this.save != null) {
                 string needle = this.clubSearch.Text.Trim().ToLower();
                 foreach (SaveGame.Club club in this.save.Clubs) {
@@ -248,19 +245,22 @@ namespace CM0102_Starter_Kit {
                         item.SubItems.Add(club.Balance.ToString("N0"));
                         item.SubItems.Add(club.Bank.ToString("N0"));
                         item.Tag = club;
-                        this.clubList.Items.Add(item);
-                        if (this.clubList.Items.Count >= 400) break;
+                        rows.Add(item);
+                        if (rows.Count >= 400) break;
                     }
                 }
             }
+            this.clubSorter.Apply(rows);
+            this.clubList.BeginUpdate();
+            this.clubList.Items.Clear();
+            this.clubList.Items.AddRange(rows.ToArray());
             this.clubList.EndUpdate();
             this.writeButton.Enabled = false;
             this.selectedClub = null;
         }
 
         void RefreshPlayerList() {
-            this.playerList.BeginUpdate();
-            this.playerList.Items.Clear();
+            List<ListViewItem> rows = new List<ListViewItem>();
             if (this.save != null && this.save.Players.Count > 0) {
                 string name = this.playerSearch.Text.Trim().ToLower();
                 string club = this.playerClubFilter.Text.Trim().ToLower();
@@ -278,11 +278,15 @@ namespace CM0102_Starter_Kit {
                         item.SubItems.Add(this.save.ReadInt16(player.PlayerBase + 7).ToString());
                         item.SubItems.Add(this.save.ReadInt32(player.StaffBase + 82).ToString("N0"));
                         item.Tag = player;
-                        this.playerList.Items.Add(item);
-                        if (this.playerList.Items.Count >= 400) break;
+                        rows.Add(item);
+                        if (rows.Count >= 400) break;
                     }
                 }
             }
+            this.playerSorter.Apply(rows);
+            this.playerList.BeginUpdate();
+            this.playerList.Items.Clear();
+            this.playerList.Items.AddRange(rows.ToArray());
             this.playerList.EndUpdate();
         }
 
