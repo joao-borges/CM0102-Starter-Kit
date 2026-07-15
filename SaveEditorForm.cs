@@ -110,10 +110,9 @@ namespace CM0102_Starter_Kit {
         }
 
         static bool GameIsRunning() {
-            return Process.GetProcesses().Any(p => {
-                try { return p.ProcessName.ToLower().StartsWith("cm0102"); }
-                catch { return false; }
-            });
+            // Exact name only - "cm0102" is the game; matching by prefix would also
+            // catch the Starter Kit's own process (CM0102StarterKit)
+            return Process.GetProcessesByName("cm0102").Length > 0;
         }
 
         void LoadSelectedSave() {
