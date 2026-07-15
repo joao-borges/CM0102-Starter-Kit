@@ -2,32 +2,36 @@ using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Windows.Forms;
 using static CM0102_Starter_Kit.Helper;
 
 namespace CM0102_Starter_Kit {
     /// <summary>
-    /// Built-in save game editor (phase 1: club finances). Replaces CM Explorer for the
-    /// edits that used to corrupt budgets: money is written to BOTH places the engine
+    /// Built-in save game editor. Clubs tab: money is written to BOTH places the engine
     /// reads (finance ledger int64 + club Bank) and clamped to overflow-safe values.
+    /// Players tab: attribute editing with the intrinsic/display conversion handled
+    /// (see PlayerEditForm). Every write backs the save up first.
     /// </summary>
     class SaveEditorForm : Form {
         SaveGame save;
         ComboBox saveSelector;
-        TextBox search;
+        Label status;
+        // clubs tab
+        TextBox clubSearch;
         ListView clubList;
         TextBox balanceBox, bankBox;
-        Label status;
         Button writeButton;
         SaveGame.Club selectedClub;
+        // players tab
+        TextBox playerSearch;
+        ListView playerList;
         readonly Action launchLegacyExplorer;
 
         public SaveEditorForm(Action launchLegacyExplorer) {
             this.launchLegacyExplorer = launchLegacyExplorer;
-            this.Text = "Starter Kit Save Editor - Clubs";
-            this.Size = new Size(760, 540);
-            this.MinimumSize = new Size(640, 420);
+            this.Text = "Starter Kit Save Editor";
+            this.Size = new Size(780, 560);
+            this.MinimumSize = new Size(700, 460);
             this.StartPosition = FormStartPosition.CenterParent;
             BuildControls();
             RefreshSaveList();
@@ -37,20 +41,43 @@ namespace CM0102_Starter_Kit {
             Label saveLabel = new Label { Text = "Save game:", AutoSize = true, Location = new Point(12, 15) };
             this.saveSelector = new ComboBox {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Location = new Point(85, 12), Width = 320,
-                Anchor = AnchorStyles.Top | AnchorStyles.Left
+                Location = new Point(85, 12), Width = 320
             };
             this.saveSelector.SelectedIndexChanged += (s, e) => LoadSelectedSave();
 
-            Label searchLabel = new Label { Text = "Search:", AutoSize = true, Location = new Point(12, 47) };
-            this.search = new TextBox { Location = new Point(85, 44), Width = 320 };
-            this.search.TextChanged += (s, e) => RefreshClubList();
+            TabControl tabs = new TabControl {
+                Location = new Point(8, 42),
+                Size = new Size(756, 440),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom
+            };
+            TabPage clubsPage = new TabPage("Clubs");
+            TabPage playersPage = new TabPage("Players");
+            tabs.TabPages.Add(clubsPage);
+            tabs.TabPages.Add(playersPage);
+            tabs.SelectedIndexChanged += (s, e) => {
+                if (tabs.SelectedTab == playersPage) EnsurePlayersLoaded();
+            };
+
+            BuildClubsPage(clubsPage);
+            BuildPlayersPage(playersPage);
+
+            this.status = new Label {
+                Text = "", AutoSize = false, Location = new Point(12, 490), Size = new Size(750, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            this.Controls.AddRange(new Control[] { saveLabel, this.saveSelector, tabs, this.status });
+        }
+
+        void BuildClubsPage(TabPage page) {
+            Label searchLabel = new Label { Text = "Search:", AutoSize = true, Location = new Point(10, 13) };
+            this.clubSearch = new TextBox { Location = new Point(70, 10), Width = 300 };
+            this.clubSearch.TextChanged += (s, e) => RefreshClubList();
 
             this.clubList = new ListView {
                 View = View.Details, FullRowSelect = true, HideSelection = false,
-                Location = new Point(12, 75), Size = new Size(460, 380),
+                Location = new Point(10, 40), Size = new Size(460, 360),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                VirtualMode = false, MultiSelect = false
+                MultiSelect = false
             };
             this.clubList.Columns.Add("Club", 240);
             this.clubList.Columns.Add("Balance", 100, HorizontalAlignment.Right);
@@ -59,7 +86,7 @@ namespace CM0102_Starter_Kit {
 
             GroupBox money = new GroupBox {
                 Text = "Club money",
-                Location = new Point(485, 75), Size = new Size(250, 190),
+                Location = new Point(482, 40), Size = new Size(250, 190),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
             money.Controls.Add(new Label { Text = "Balance (cash reserves):", AutoSize = true, Location = new Point(12, 28) });
@@ -69,30 +96,51 @@ namespace CM0102_Starter_Kit {
             this.bankBox = new TextBox { Location = new Point(15, 102), Width = 150 };
             money.Controls.Add(this.bankBox);
             money.Controls.Add(new Label {
-                Text = "Safe range: 0 - 500,000,000.\nHigher values break the board's\nbudget maths (32-bit overflow).",
-                AutoSize = true, Location = new Point(12, 135), ForeColor = Color.DimGray
+                Text = "Safe range: 0 - 500,000,000.\nHigher values break the board's\nbudget maths (32-bit overflow).\nIn-game display converts currency,\nso the shown figure will differ.",
+                AutoSize = true, Location = new Point(12, 130), ForeColor = Color.DimGray
             });
 
             this.writeButton = new Button {
                 Text = "Apply && Save", Enabled = false,
-                Location = new Point(485, 280), Size = new Size(250, 34),
+                Location = new Point(482, 245), Size = new Size(250, 34),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
-            this.writeButton.Click += (s, e) => ApplyAndSave();
-
-            this.status = new Label {
-                Text = "", AutoSize = false, Location = new Point(12, 462), Size = new Size(723, 30),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
-            };
+            this.writeButton.Click += (s, e) => ApplyClubAndSave();
 
             Button legacy = new Button {
-                Text = "Players && staff: open CM Explorer...",
-                Location = new Point(485, 330), Size = new Size(250, 34),
+                Text = "Anything else: open CM Explorer...",
+                Location = new Point(482, 290), Size = new Size(250, 34),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
             legacy.Click += (s, e) => this.launchLegacyExplorer();
 
-            this.Controls.AddRange(new Control[] { saveLabel, this.saveSelector, searchLabel, this.search, this.clubList, money, this.writeButton, legacy, this.status });
+            page.Controls.AddRange(new Control[] { searchLabel, this.clubSearch, this.clubList, money, this.writeButton, legacy });
+        }
+
+        void BuildPlayersPage(TabPage page) {
+            Label searchLabel = new Label { Text = "Search:", AutoSize = true, Location = new Point(10, 13) };
+            this.playerSearch = new TextBox { Location = new Point(70, 10), Width = 300 };
+            this.playerSearch.TextChanged += (s, e) => RefreshPlayerList();
+            Label hint = new Label {
+                Text = "Type at least 3 letters of the player's name, then double-click to edit.",
+                AutoSize = true, Location = new Point(390, 13), ForeColor = Color.DimGray
+            };
+
+            this.playerList = new ListView {
+                View = View.Details, FullRowSelect = true, HideSelection = false,
+                Location = new Point(10, 40), Size = new Size(722, 360),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
+                MultiSelect = false
+            };
+            this.playerList.Columns.Add("Name", 220);
+            this.playerList.Columns.Add("Age", 45, HorizontalAlignment.Right);
+            this.playerList.Columns.Add("Club", 220);
+            this.playerList.Columns.Add("CA", 50, HorizontalAlignment.Right);
+            this.playerList.Columns.Add("PA", 50, HorizontalAlignment.Right);
+            this.playerList.Columns.Add("Value", 100, HorizontalAlignment.Right);
+            this.playerList.DoubleClick += (s, e) => EditSelectedPlayer();
+
+            page.Controls.AddRange(new Control[] { searchLabel, this.playerSearch, hint, this.playerList });
         }
 
         void RefreshSaveList() {
@@ -117,14 +165,33 @@ namespace CM0102_Starter_Kit {
 
         void LoadSelectedSave() {
             try {
+                Cursor = Cursors.WaitCursor;
                 this.save = new SaveGame(Path.Combine(GameFolder, (string) this.saveSelector.SelectedItem));
                 this.save.Load();
                 this.status.Text = this.save.Clubs.Count.ToString("N0") + " clubs loaded from " + this.save.FileName + ".";
                 RefreshClubList();
+                RefreshPlayerList();
             } catch (Exception exception) {
                 this.save = null;
                 this.clubList.Items.Clear();
+                this.playerList.Items.Clear();
                 this.status.Text = exception.Message;
+            } finally {
+                Cursor = Cursors.Default;
+            }
+        }
+
+        void EnsurePlayersLoaded() {
+            if (this.save == null || this.save.Players.Count > 0) return;
+            try {
+                Cursor = Cursors.WaitCursor;
+                this.save.LoadPlayers();
+                this.status.Text = this.save.Players.Count.ToString("N0") + " players indexed.";
+                RefreshPlayerList();
+            } catch (Exception exception) {
+                this.status.Text = exception.Message;
+            } finally {
+                Cursor = Cursors.Default;
             }
         }
 
@@ -132,9 +199,8 @@ namespace CM0102_Starter_Kit {
             this.clubList.BeginUpdate();
             this.clubList.Items.Clear();
             if (this.save != null) {
-                string needle = this.search.Text.Trim().ToLower();
+                string needle = this.clubSearch.Text.Trim().ToLower();
                 foreach (SaveGame.Club club in this.save.Clubs) {
-                    if (needle.Length < 2 && needle.Length > 0) continue;
                     if (needle.Length == 0 || club.LongName.ToLower().Contains(needle) || club.ShortName.ToLower().Contains(needle)) {
                         ListViewItem item = new ListViewItem(club.LongName);
                         item.SubItems.Add(club.Balance.ToString("N0"));
@@ -150,6 +216,30 @@ namespace CM0102_Starter_Kit {
             this.selectedClub = null;
         }
 
+        void RefreshPlayerList() {
+            this.playerList.BeginUpdate();
+            this.playerList.Items.Clear();
+            if (this.save != null && this.save.Players.Count > 0) {
+                string needle = this.playerSearch.Text.Trim().ToLower();
+                if (needle.Length >= 3) {
+                    foreach (SaveGame.PlayerRef player in this.save.Players) {
+                        if (player.Name.ToLower().Contains(needle)) {
+                            ListViewItem item = new ListViewItem(player.Name);
+                            item.SubItems.Add(player.Age.ToString());
+                            item.SubItems.Add(player.ClubName);
+                            item.SubItems.Add(this.save.ReadInt16(player.PlayerBase + 5).ToString());
+                            item.SubItems.Add(this.save.ReadInt16(player.PlayerBase + 7).ToString());
+                            item.SubItems.Add(this.save.ReadInt32(player.StaffBase + 82).ToString("N0"));
+                            item.Tag = player;
+                            this.playerList.Items.Add(item);
+                            if (this.playerList.Items.Count >= 400) break;
+                        }
+                    }
+                }
+            }
+            this.playerList.EndUpdate();
+        }
+
         void ShowSelectedClub() {
             if (this.clubList.SelectedItems.Count == 0) return;
             this.selectedClub = (SaveGame.Club) this.clubList.SelectedItems[0].Tag;
@@ -158,14 +248,18 @@ namespace CM0102_Starter_Kit {
             this.writeButton.Enabled = true;
         }
 
-        void ApplyAndSave() {
-            if (this.save == null || this.selectedClub == null) return;
+        bool BlockedByRunningGame() {
             if (GameIsRunning()) {
                 MessageBox.Show(this, "The game is running. Exit CM 01/02 first, otherwise " +
                     "its next save would overwrite this edit.", "Save Editor",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
+                return true;
             }
+            return false;
+        }
+
+        void ApplyClubAndSave() {
+            if (this.save == null || this.selectedClub == null || BlockedByRunningGame()) return;
             long balance;
             int bank;
             if (!long.TryParse(this.balanceBox.Text.Replace(",", "").Replace(".", ""), out balance) ||
@@ -179,6 +273,25 @@ namespace CM0102_Starter_Kit {
                 this.status.Text = this.selectedClub.LongName + " updated. Backup: " + Path.GetFileName(backup);
                 this.clubList.SelectedItems[0].SubItems[1].Text = balance.ToString("N0");
                 this.clubList.SelectedItems[0].SubItems[2].Text = bank.ToString("N0");
+            } catch (Exception exception) {
+                this.status.Text = exception.Message;
+            }
+        }
+
+        void EditSelectedPlayer() {
+            if (this.save == null || this.playerList.SelectedItems.Count == 0) return;
+            SaveGame.PlayerRef player = (SaveGame.PlayerRef) this.playerList.SelectedItems[0].Tag;
+            using (PlayerEditForm editor = new PlayerEditForm(this.save, player)) {
+                if (editor.ShowDialog(this) != DialogResult.OK) return;
+            }
+            if (BlockedByRunningGame()) {
+                this.status.Text = "Edit NOT saved - game running. Reopen the editor after exiting the game.";
+                return;
+            }
+            try {
+                string backup = this.save.Save();
+                this.status.Text = player.Name + " updated. Backup: " + Path.GetFileName(backup);
+                RefreshPlayerList();
             } catch (Exception exception) {
                 this.status.Text = exception.Message;
             }
