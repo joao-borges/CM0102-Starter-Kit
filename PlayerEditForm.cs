@@ -114,12 +114,12 @@ namespace CM0102_Starter_Kit {
         }
 
         ComboBox MakeAutoCompleteCombo(int width) {
-            return new ComboBox {
+            ComboBox combo = new ComboBox {
                 DropDownStyle = ComboBoxStyle.DropDown,
-                AutoCompleteMode = AutoCompleteMode.SuggestAppend,
-                AutoCompleteSource = AutoCompleteSource.ListItems,
                 Width = width
             };
+            ComboBoxAutoComplete.Attach(combo);
+            return combo;
         }
 
         void BuildControls() {

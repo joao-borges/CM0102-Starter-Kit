@@ -76,6 +76,7 @@
     <Compile Include="ProgressWindow.Designer.cs">
       <DependentUpon>ProgressWindow.cs</DependentUpon>
     </Compile>
+    <Compile Include="ComboBoxAutoComplete.cs" />
     <Compile Include="Helper.cs" />
     <Compile Include="ListViewColumnSorter.cs" />
     <Compile Include="SaveGame.cs" />

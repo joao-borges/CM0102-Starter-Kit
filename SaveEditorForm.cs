@@ -124,12 +124,12 @@ namespace CM0102_Starter_Kit {
         }
 
         static ComboBox MakeFilterCombo(int x, int width) {
-            return new ComboBox {
+            ComboBox combo = new ComboBox {
                 DropDownStyle = ComboBoxStyle.DropDown,
-                AutoCompleteMode = AutoCompleteMode.SuggestAppend,
-                AutoCompleteSource = AutoCompleteSource.ListItems,
                 Location = new Point(x, 10), Width = width
             };
+            ComboBoxAutoComplete.Attach(combo);
+            return combo;
         }
 
         void BuildPlayersPage(TabPage page) {
