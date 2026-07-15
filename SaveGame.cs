@@ -143,6 +143,7 @@ namespace CM0102_Starter_Kit {
             public int ContractBase;    // file offset of contract record (-1 if none)
             public string Name;
             public string ClubName;
+            public string Nation;
             public int Age;
         }
 
@@ -178,6 +179,14 @@ namespace CM0102_Starter_Kit {
             Dictionary<int, string> clubNames = new Dictionary<int, string>();
             foreach (Club club in this.clubs) {
                 clubNames[club.Id] = club.LongName;
+            }
+
+            // nation.dat: 290-byte records, id at +0, name (50 chars) at +4
+            Dictionary<int, string> nationNames = new Dictionary<int, string>();
+            Block nationBlock = this.blocks["nation.dat"];
+            for (int record = 0; record < nationBlock.Size / 290; record++) {
+                int recordBase = nationBlock.Pos + record * 290;
+                nationNames[BitConverter.ToInt32(this.data, recordBase)] = ReadString(this.data, recordBase + 4, 50);
             }
 
             // player.dat id -> record offset
@@ -218,7 +227,8 @@ namespace CM0102_Starter_Kit {
                     : (NameAt(firstNames, BitConverter.ToInt32(this.data, staffBase + 4)) + " " +
                        NameAt(secondNames, BitConverter.ToInt32(this.data, staffBase + 8))).Trim();
                 int clubId = BitConverter.ToInt32(this.data, staffBase + 57);
-                string clubName;
+                int nationId = BitConverter.ToInt32(this.data, staffBase + 26);
+                string clubName, nationName;
                 int birthYear = BitConverter.ToInt16(this.data, staffBase + 18);
                 int contractBase;
                 this.players.Add(new PlayerRef {
@@ -227,6 +237,7 @@ namespace CM0102_Starter_Kit {
                     ContractBase = contractOffsets.TryGetValue(staffId, out contractBase) ? contractBase : -1,
                     Name = name,
                     ClubName = clubNames.TryGetValue(clubId, out clubName) ? clubName : "-",
+                    Nation = nationNames.TryGetValue(nationId, out nationName) ? nationName : "-",
                     Age = birthYear > 1800 ? this.gameYear - birthYear : 0
                 });
             }

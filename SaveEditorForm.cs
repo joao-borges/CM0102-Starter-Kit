@@ -23,7 +23,7 @@ namespace CM0102_Starter_Kit {
         Button writeButton;
         SaveGame.Club selectedClub;
         // players tab
-        TextBox playerSearch;
+        TextBox playerSearch, playerClubFilter, playerNationFilter;
         ListView playerList;
         readonly Action launchLegacyExplorer;
 
@@ -118,12 +118,19 @@ namespace CM0102_Starter_Kit {
         }
 
         void BuildPlayersPage(TabPage page) {
-            Label searchLabel = new Label { Text = "Search:", AutoSize = true, Location = new Point(10, 13) };
-            this.playerSearch = new TextBox { Location = new Point(70, 10), Width = 300 };
+            Label searchLabel = new Label { Text = "Name:", AutoSize = true, Location = new Point(10, 13) };
+            this.playerSearch = new TextBox { Location = new Point(58, 10), Width = 180 };
             this.playerSearch.TextChanged += (s, e) => RefreshPlayerList();
+            Label clubLabel = new Label { Text = "Club:", AutoSize = true, Location = new Point(252, 13) };
+            this.playerClubFilter = new TextBox { Location = new Point(292, 10), Width = 160 };
+            this.playerClubFilter.TextChanged += (s, e) => RefreshPlayerList();
+            Label nationLabel = new Label { Text = "Nation:", AutoSize = true, Location = new Point(466, 13) };
+            this.playerNationFilter = new TextBox { Location = new Point(518, 10), Width = 130 };
+            this.playerNationFilter.TextChanged += (s, e) => RefreshPlayerList();
             Label hint = new Label {
-                Text = "Type at least 3 letters of the player's name, then double-click to edit.",
-                AutoSize = true, Location = new Point(390, 13), ForeColor = Color.DimGray
+                Text = "Fill any filter (3+ letters; nation 2+), then double-click a player to edit.",
+                AutoSize = true, Location = new Point(10, 405), ForeColor = Color.DimGray,
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
 
             this.playerList = new ListView {
@@ -132,15 +139,16 @@ namespace CM0102_Starter_Kit {
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
                 MultiSelect = false
             };
-            this.playerList.Columns.Add("Name", 220);
-            this.playerList.Columns.Add("Age", 45, HorizontalAlignment.Right);
-            this.playerList.Columns.Add("Club", 220);
-            this.playerList.Columns.Add("CA", 50, HorizontalAlignment.Right);
-            this.playerList.Columns.Add("PA", 50, HorizontalAlignment.Right);
-            this.playerList.Columns.Add("Value", 100, HorizontalAlignment.Right);
+            this.playerList.Columns.Add("Name", 190);
+            this.playerList.Columns.Add("Age", 42, HorizontalAlignment.Right);
+            this.playerList.Columns.Add("Club", 180);
+            this.playerList.Columns.Add("Nation", 110);
+            this.playerList.Columns.Add("CA", 46, HorizontalAlignment.Right);
+            this.playerList.Columns.Add("PA", 46, HorizontalAlignment.Right);
+            this.playerList.Columns.Add("Value", 95, HorizontalAlignment.Right);
             this.playerList.DoubleClick += (s, e) => EditSelectedPlayer();
 
-            page.Controls.AddRange(new Control[] { searchLabel, this.playerSearch, hint, this.playerList });
+            page.Controls.AddRange(new Control[] { searchLabel, this.playerSearch, clubLabel, this.playerClubFilter, nationLabel, this.playerNationFilter, hint, this.playerList });
         }
 
         void RefreshSaveList() {
@@ -220,20 +228,24 @@ namespace CM0102_Starter_Kit {
             this.playerList.BeginUpdate();
             this.playerList.Items.Clear();
             if (this.save != null && this.save.Players.Count > 0) {
-                string needle = this.playerSearch.Text.Trim().ToLower();
-                if (needle.Length >= 3) {
+                string name = this.playerSearch.Text.Trim().ToLower();
+                string club = this.playerClubFilter.Text.Trim().ToLower();
+                string nation = this.playerNationFilter.Text.Trim().ToLower();
+                if (name.Length >= 3 || club.Length >= 3 || nation.Length >= 2) {
                     foreach (SaveGame.PlayerRef player in this.save.Players) {
-                        if (player.Name.ToLower().Contains(needle)) {
-                            ListViewItem item = new ListViewItem(player.Name);
-                            item.SubItems.Add(player.Age.ToString());
-                            item.SubItems.Add(player.ClubName);
-                            item.SubItems.Add(this.save.ReadInt16(player.PlayerBase + 5).ToString());
-                            item.SubItems.Add(this.save.ReadInt16(player.PlayerBase + 7).ToString());
-                            item.SubItems.Add(this.save.ReadInt32(player.StaffBase + 82).ToString("N0"));
-                            item.Tag = player;
-                            this.playerList.Items.Add(item);
-                            if (this.playerList.Items.Count >= 400) break;
-                        }
+                        if (name.Length > 0 && !player.Name.ToLower().Contains(name)) continue;
+                        if (club.Length > 0 && !player.ClubName.ToLower().Contains(club)) continue;
+                        if (nation.Length > 0 && !player.Nation.ToLower().Contains(nation)) continue;
+                        ListViewItem item = new ListViewItem(player.Name);
+                        item.SubItems.Add(player.Age.ToString());
+                        item.SubItems.Add(player.ClubName);
+                        item.SubItems.Add(player.Nation);
+                        item.SubItems.Add(this.save.ReadInt16(player.PlayerBase + 5).ToString());
+                        item.SubItems.Add(this.save.ReadInt16(player.PlayerBase + 7).ToString());
+                        item.SubItems.Add(this.save.ReadInt32(player.StaffBase + 82).ToString("N0"));
+                        item.Tag = player;
+                        this.playerList.Items.Add(item);
+                        if (this.playerList.Items.Count >= 400) break;
                     }
                 }
             }
