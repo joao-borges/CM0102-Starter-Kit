@@ -157,7 +157,45 @@ namespace CM0102_Starter_Kit {
             public string Name;
             public string ClubName;
             public string Nation;
+            public string Position;
             public int Age;
+        }
+
+        /// <summary>
+        /// In-game style position string ("GK", "D/DM C", "AM/F RLC", ...) from the
+        /// twelve position ratings at player record +15. Logic ported from Nick's
+        /// CM0102Patcher Scouter (ShortPosition), with wingbacks added.
+        /// Rating order: GK, SW, D, DM, M, AM, ATT, WB, Right, Left, Centre, FreeRole.
+        /// </summary>
+        string PositionString(int playerBase) {
+            sbyte gk = ReadSByte(playerBase + 15), sw = ReadSByte(playerBase + 16),
+                  d = ReadSByte(playerBase + 17), dm = ReadSByte(playerBase + 18),
+                  m = ReadSByte(playerBase + 19), am = ReadSByte(playerBase + 20),
+                  att = ReadSByte(playerBase + 21), wb = ReadSByte(playerBase + 22),
+                  right = ReadSByte(playerBase + 23), left = ReadSByte(playerBase + 24),
+                  centre = ReadSByte(playerBase + 25), free = ReadSByte(playerBase + 26);
+            List<string> parts = new List<string>();
+            if (gk > 14) parts.Add("GK");
+            if (sw > 14) parts.Add("SW");
+            if (d > 14) parts.Add("D");
+            if (wb > 14) parts.Add("WB");
+            if (dm > 14) parts.Add("DM");
+            if (m > 14 && dm <= 14 && am <= 14) parts.Add("M");
+            if (am > 14 && dm <= 14 && (att <= 14 || m > 14)) parts.Add("AM");
+            if (att > 14) {
+                parts.Add(am > 14 || left > 14 || right > 14 || free > 14 ? "F" : "S");
+            }
+            string result = string.Join("/", parts.ToArray());
+            if (gk <= 14) {
+                string sides = "";
+                if (right > 14) sides += "R";
+                if (left > 14) sides += "L";
+                if (centre > 14) sides += "C";
+                if (sides.Length > 0) {
+                    result = (result + " " + sides).Trim();
+                }
+            }
+            return result;
         }
 
         public class Nation {
@@ -301,6 +339,7 @@ namespace CM0102_Starter_Kit {
                     Name = name,
                     ClubName = clubName,
                     Nation = nationNames.TryGetValue(nationId, out nationName) ? nationName : "-",
+                    Position = PositionString(playerBase),
                     Age = birthYear > 1800 ? this.gameYear - birthYear : 0
                 });
             }

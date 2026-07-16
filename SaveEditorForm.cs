@@ -153,13 +153,14 @@ namespace CM0102_Starter_Kit {
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
                 MultiSelect = false
             };
-            this.playerList.Columns.Add("Name", 190);
-            this.playerList.Columns.Add("Age", 42, HorizontalAlignment.Right);
-            this.playerList.Columns.Add("Club", 180);
-            this.playerList.Columns.Add("Nation", 110);
-            this.playerList.Columns.Add("CA", 46, HorizontalAlignment.Right);
-            this.playerList.Columns.Add("PA", 46, HorizontalAlignment.Right);
-            this.playerList.Columns.Add("Value", 95, HorizontalAlignment.Right);
+            this.playerList.Columns.Add("Name", 170);
+            this.playerList.Columns.Add("Pos", 75);
+            this.playerList.Columns.Add("Age", 40, HorizontalAlignment.Right);
+            this.playerList.Columns.Add("Club", 160);
+            this.playerList.Columns.Add("Nation", 100);
+            this.playerList.Columns.Add("CA", 44, HorizontalAlignment.Right);
+            this.playerList.Columns.Add("PA", 44, HorizontalAlignment.Right);
+            this.playerList.Columns.Add("Value", 85, HorizontalAlignment.Right);
             this.playerList.DoubleClick += (s, e) => EditSelectedPlayer();
             this.playerList.ColumnClick += (s, e) => { this.playerSorter.HandleColumnClick(e.Column); RefreshPlayerList(); };
 
@@ -251,12 +252,24 @@ namespace CM0102_Starter_Kit {
                 }
             }
             this.clubSorter.Apply(rows);
-            this.clubList.BeginUpdate();
-            this.clubList.Items.Clear();
-            this.clubList.Items.AddRange(rows.ToArray());
-            this.clubList.EndUpdate();
+            PopulateListView(this.clubList, rows);
             this.writeButton.Enabled = false;
             this.selectedClub = null;
+        }
+
+        /// <summary>
+        /// Rebuilds a ListView's rows WITHOUT BeginUpdate/EndUpdate: Wine's list
+        /// control fails to recalculate its scrollbar when items are added while
+        /// redraw is suspended, leaving overflowing rows unreachable. The size
+        /// jiggle afterwards forces one more scroll-range recalculation.
+        /// </summary>
+        static void PopulateListView(ListView list, List<ListViewItem> rows) {
+            list.Items.Clear();
+            foreach (ListViewItem row in rows) {
+                list.Items.Add(row);
+            }
+            list.Height += 1;
+            list.Height -= 1;
         }
 
         void RefreshPlayerList() {
@@ -271,6 +284,7 @@ namespace CM0102_Starter_Kit {
                         if (club.Length > 0 && !player.ClubName.ToLower().Contains(club)) continue;
                         if (nation.Length > 0 && !player.Nation.ToLower().Contains(nation)) continue;
                         ListViewItem item = new ListViewItem(player.Name);
+                        item.SubItems.Add(player.Position);
                         item.SubItems.Add(player.Age.ToString());
                         item.SubItems.Add(player.ClubName);
                         item.SubItems.Add(player.Nation);
@@ -284,10 +298,7 @@ namespace CM0102_Starter_Kit {
                 }
             }
             this.playerSorter.Apply(rows);
-            this.playerList.BeginUpdate();
-            this.playerList.Items.Clear();
-            this.playerList.Items.AddRange(rows.ToArray());
-            this.playerList.EndUpdate();
+            PopulateListView(this.playerList, rows);
         }
 
         void ShowSelectedClub() {
