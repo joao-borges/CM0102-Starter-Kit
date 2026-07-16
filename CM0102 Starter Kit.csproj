@@ -78,7 +78,6 @@
     </Compile>
     <Compile Include="ComboBoxAutoComplete.cs" />
     <Compile Include="Helper.cs" />
-    <Compile Include="ListViewColumnSorter.cs" />
     <Compile Include="SaveGame.cs" />
     <Compile Include="StaffPickerDialog.cs">
       <SubType>Form</SubType>

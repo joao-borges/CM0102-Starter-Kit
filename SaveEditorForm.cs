@@ -12,6 +12,9 @@ namespace CM0102_Starter_Kit {
     /// reads (finance ledger int64 + club Bank) and clamped to overflow-safe values.
     /// Players tab: attribute editing with the intrinsic/display conversion handled
     /// (see PlayerEditForm). Every write backs the save up first.
+    /// The lists are DataGridViews on purpose: the native ListView misbehaves under
+    /// Wine (scrollbar never appears / scroll range goes stale), while DataGridView
+    /// paints and scrolls entirely in managed code.
     /// </summary>
     class SaveEditorForm : Form {
         SaveGame save;
@@ -19,16 +22,14 @@ namespace CM0102_Starter_Kit {
         Label status;
         // clubs tab
         TextBox clubSearch;
-        ListView clubList;
+        DataGridView clubGrid;
         TextBox balanceBox, bankBox;
         Button writeButton;
         SaveGame.Club selectedClub;
-        readonly ListViewColumnSorter clubSorter = new ListViewColumnSorter();
         // players tab
         TextBox playerSearch;
         ComboBox playerClubFilter, playerNationFilter;
-        ListView playerList;
-        readonly ListViewColumnSorter playerSorter = new ListViewColumnSorter();
+        DataGridView playerGrid;
         readonly Action launchLegacyExplorer;
 
         public SaveEditorForm(Action launchLegacyExplorer) {
@@ -72,22 +73,47 @@ namespace CM0102_Starter_Kit {
             this.Controls.AddRange(new Control[] { saveLabel, this.saveSelector, tabs, this.status });
         }
 
+        static DataGridView MakeGrid(Point location, Size size, AnchorStyles anchor) {
+            return new DataGridView {
+                Location = location, Size = size, Anchor = anchor,
+                ReadOnly = true,
+                AllowUserToAddRows = false, AllowUserToDeleteRows = false,
+                AllowUserToResizeRows = false, AllowUserToOrderColumns = false,
+                RowHeadersVisible = false, MultiSelect = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None,
+                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
+                BackgroundColor = SystemColors.Window,
+                ScrollBars = ScrollBars.Both
+            };
+        }
+
+        static void AddGridColumn(DataGridView grid, string title, int width, bool numeric) {
+            DataGridViewTextBoxColumn column = new DataGridViewTextBoxColumn {
+                HeaderText = title, Width = width, ReadOnly = true,
+                SortMode = DataGridViewColumnSortMode.Automatic
+            };
+            if (numeric) {
+                // typed values keep column-click sorting numeric, N0 renders separators
+                column.ValueType = typeof(long);
+                column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                column.DefaultCellStyle.Format = "N0";
+                column.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+            grid.Columns.Add(column);
+        }
+
         void BuildClubsPage(TabPage page) {
             Label searchLabel = new Label { Text = "Search:", AutoSize = true, Location = new Point(10, 13) };
             this.clubSearch = new TextBox { Location = new Point(70, 10), Width = 300 };
             this.clubSearch.TextChanged += (s, e) => RefreshClubList();
 
-            this.clubList = new ListView {
-                View = View.Details, FullRowSelect = true, HideSelection = false,
-                Location = new Point(10, 40), Size = new Size(460, 360),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom,
-                MultiSelect = false
-            };
-            this.clubList.Columns.Add("Club", 240);
-            this.clubList.Columns.Add("Balance", 100, HorizontalAlignment.Right);
-            this.clubList.Columns.Add("Bank", 90, HorizontalAlignment.Right);
-            this.clubList.SelectedIndexChanged += (s, e) => ShowSelectedClub();
-            this.clubList.ColumnClick += (s, e) => { this.clubSorter.HandleColumnClick(e.Column); RefreshClubList(); };
+            this.clubGrid = MakeGrid(new Point(10, 40), new Size(460, 360),
+                AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Bottom);
+            AddGridColumn(this.clubGrid, "Club", 220, false);
+            AddGridColumn(this.clubGrid, "Balance", 105, true);
+            AddGridColumn(this.clubGrid, "Bank", 95, true);
+            this.clubGrid.SelectionChanged += (s, e) => ShowSelectedClub();
 
             GroupBox money = new GroupBox {
                 Text = "Club money",
@@ -119,7 +145,7 @@ namespace CM0102_Starter_Kit {
             };
             legacy.Click += (s, e) => this.launchLegacyExplorer();
 
-            page.Controls.AddRange(new Control[] { searchLabel, this.clubSearch, this.clubList, money, this.writeButton, legacy });
+            page.Controls.AddRange(new Control[] { searchLabel, this.clubSearch, this.clubGrid, money, this.writeButton, legacy });
         }
 
         static ComboBox MakeFilterCombo(int x, int width) {
@@ -147,24 +173,21 @@ namespace CM0102_Starter_Kit {
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
 
-            this.playerList = new ListView {
-                View = View.Details, FullRowSelect = true, HideSelection = false,
-                Location = new Point(10, 40), Size = new Size(722, 360),
-                Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom,
-                MultiSelect = false
+            this.playerGrid = MakeGrid(new Point(10, 40), new Size(722, 360),
+                AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom);
+            AddGridColumn(this.playerGrid, "Name", 165, false);
+            AddGridColumn(this.playerGrid, "Pos", 75, false);
+            AddGridColumn(this.playerGrid, "Age", 40, true);
+            AddGridColumn(this.playerGrid, "Club", 155, false);
+            AddGridColumn(this.playerGrid, "Nation", 100, false);
+            AddGridColumn(this.playerGrid, "CA", 44, true);
+            AddGridColumn(this.playerGrid, "PA", 44, true);
+            AddGridColumn(this.playerGrid, "Value", 85, true);
+            this.playerGrid.CellDoubleClick += (s, e) => {
+                if (e.RowIndex >= 0) EditSelectedPlayer();
             };
-            this.playerList.Columns.Add("Name", 170);
-            this.playerList.Columns.Add("Pos", 75);
-            this.playerList.Columns.Add("Age", 40, HorizontalAlignment.Right);
-            this.playerList.Columns.Add("Club", 160);
-            this.playerList.Columns.Add("Nation", 100);
-            this.playerList.Columns.Add("CA", 44, HorizontalAlignment.Right);
-            this.playerList.Columns.Add("PA", 44, HorizontalAlignment.Right);
-            this.playerList.Columns.Add("Value", 85, HorizontalAlignment.Right);
-            this.playerList.DoubleClick += (s, e) => EditSelectedPlayer();
-            this.playerList.ColumnClick += (s, e) => { this.playerSorter.HandleColumnClick(e.Column); RefreshPlayerList(); };
 
-            page.Controls.AddRange(new Control[] { searchLabel, this.playerSearch, clubLabel, this.playerClubFilter, nationLabel, this.playerNationFilter, hint, this.playerList });
+            page.Controls.AddRange(new Control[] { searchLabel, this.playerSearch, clubLabel, this.playerClubFilter, nationLabel, this.playerNationFilter, hint, this.playerGrid });
         }
 
         void RefreshSaveList() {
@@ -199,8 +222,8 @@ namespace CM0102_Starter_Kit {
                 RefreshPlayerList();
             } catch (Exception exception) {
                 this.save = null;
-                this.clubList.Items.Clear();
-                this.playerList.Items.Clear();
+                this.clubGrid.Rows.Clear();
+                this.playerGrid.Rows.Clear();
                 this.status.Text = exception.Message;
             } finally {
                 Cursor = Cursors.Default;
@@ -237,43 +260,24 @@ namespace CM0102_Starter_Kit {
         }
 
         void RefreshClubList() {
-            List<ListViewItem> rows = new List<ListViewItem>();
+            this.clubGrid.Rows.Clear();
             if (this.save != null) {
                 string needle = this.clubSearch.Text.Trim().ToLower();
                 foreach (SaveGame.Club club in this.save.Clubs) {
                     if (needle.Length == 0 || club.LongName.ToLower().Contains(needle) || club.ShortName.ToLower().Contains(needle)) {
-                        ListViewItem item = new ListViewItem(club.LongName);
-                        item.SubItems.Add(club.Balance.ToString("N0"));
-                        item.SubItems.Add(club.Bank.ToString("N0"));
-                        item.Tag = club;
-                        rows.Add(item);
-                        if (rows.Count >= 400) break;
+                        int index = this.clubGrid.Rows.Add(club.LongName, club.Balance, (long) club.Bank);
+                        this.clubGrid.Rows[index].Tag = club;
+                        if (this.clubGrid.Rows.Count >= 400) break;
                     }
                 }
             }
-            this.clubSorter.Apply(rows);
-            PopulateListView(this.clubList, rows);
+            this.clubGrid.ClearSelection();
             this.writeButton.Enabled = false;
             this.selectedClub = null;
         }
 
-        /// <summary>
-        /// Rebuilds a ListView's rows WITHOUT BeginUpdate/EndUpdate: Wine's list
-        /// control fails to recalculate its scrollbar when items are added while
-        /// redraw is suspended, leaving overflowing rows unreachable. The size
-        /// jiggle afterwards forces one more scroll-range recalculation.
-        /// </summary>
-        static void PopulateListView(ListView list, List<ListViewItem> rows) {
-            list.Items.Clear();
-            foreach (ListViewItem row in rows) {
-                list.Items.Add(row);
-            }
-            list.Height += 1;
-            list.Height -= 1;
-        }
-
         void RefreshPlayerList() {
-            List<ListViewItem> rows = new List<ListViewItem>();
+            this.playerGrid.Rows.Clear();
             if (this.save != null && this.save.Players.Count > 0) {
                 string name = this.playerSearch.Text.Trim().ToLower();
                 string club = this.playerClubFilter.Text.Trim().ToLower();
@@ -283,27 +287,27 @@ namespace CM0102_Starter_Kit {
                         if (name.Length > 0 && !player.Name.ToLower().Contains(name)) continue;
                         if (club.Length > 0 && !player.ClubName.ToLower().Contains(club)) continue;
                         if (nation.Length > 0 && !player.Nation.ToLower().Contains(nation)) continue;
-                        ListViewItem item = new ListViewItem(player.Name);
-                        item.SubItems.Add(player.Position);
-                        item.SubItems.Add(player.Age.ToString());
-                        item.SubItems.Add(player.ClubName);
-                        item.SubItems.Add(player.Nation);
-                        item.SubItems.Add(this.save.ReadInt16(player.PlayerBase + 5).ToString());
-                        item.SubItems.Add(this.save.ReadInt16(player.PlayerBase + 7).ToString());
-                        item.SubItems.Add(this.save.ReadInt32(player.StaffBase + 82).ToString("N0"));
-                        item.Tag = player;
-                        rows.Add(item);
-                        if (rows.Count >= 400) break;
+                        int index = this.playerGrid.Rows.Add(
+                            player.Name, player.Position, (long) player.Age,
+                            player.ClubName, player.Nation,
+                            (long) this.save.ReadInt16(player.PlayerBase + 5),
+                            (long) this.save.ReadInt16(player.PlayerBase + 7),
+                            (long) this.save.ReadInt32(player.StaffBase + 82));
+                        this.playerGrid.Rows[index].Tag = player;
+                        if (this.playerGrid.Rows.Count >= 400) break;
                     }
                 }
             }
-            this.playerSorter.Apply(rows);
-            PopulateListView(this.playerList, rows);
+            this.playerGrid.ClearSelection();
         }
 
         void ShowSelectedClub() {
-            if (this.clubList.SelectedItems.Count == 0) return;
-            this.selectedClub = (SaveGame.Club) this.clubList.SelectedItems[0].Tag;
+            if (this.clubGrid.SelectedRows.Count == 0 || this.clubGrid.SelectedRows[0].Tag == null) {
+                this.writeButton.Enabled = false;
+                this.selectedClub = null;
+                return;
+            }
+            this.selectedClub = (SaveGame.Club) this.clubGrid.SelectedRows[0].Tag;
             this.balanceBox.Text = this.selectedClub.Balance.ToString();
             this.bankBox.Text = this.selectedClub.Bank.ToString();
             this.writeButton.Enabled = true;
@@ -332,16 +336,19 @@ namespace CM0102_Starter_Kit {
                 this.save.SetClubMoney(this.selectedClub, balance, bank);
                 string backup = this.save.Save();
                 this.status.Text = this.selectedClub.LongName + " updated. Backup: " + Path.GetFileName(backup);
-                this.clubList.SelectedItems[0].SubItems[1].Text = balance.ToString("N0");
-                this.clubList.SelectedItems[0].SubItems[2].Text = bank.ToString("N0");
+                if (this.clubGrid.SelectedRows.Count > 0) {
+                    this.clubGrid.SelectedRows[0].Cells[1].Value = balance;
+                    this.clubGrid.SelectedRows[0].Cells[2].Value = (long) bank;
+                }
             } catch (Exception exception) {
                 this.status.Text = exception.Message;
             }
         }
 
         void EditSelectedPlayer() {
-            if (this.save == null || this.playerList.SelectedItems.Count == 0) return;
-            SaveGame.PlayerRef player = (SaveGame.PlayerRef) this.playerList.SelectedItems[0].Tag;
+            if (this.save == null || this.playerGrid.SelectedRows.Count == 0) return;
+            SaveGame.PlayerRef player = this.playerGrid.SelectedRows[0].Tag as SaveGame.PlayerRef;
+            if (player == null) return;
             using (PlayerEditForm editor = new PlayerEditForm(this.save, player)) {
                 if (editor.ShowDialog(this) != DialogResult.OK) return;
             }
