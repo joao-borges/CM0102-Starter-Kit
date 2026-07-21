@@ -159,7 +159,14 @@ namespace CM0102_Starter_Kit {
         private void CmExplorer_Click(object sender, EventArgs e) {
             // Built-in editor (club finances); CM Explorer remains available from
             // inside it for the record types the built-in editor doesn't cover yet
-            new SaveEditorForm(LaunchCmExplorer).ShowDialog(this);
+            using (SaveEditorForm editor = new SaveEditorForm(LaunchCmExplorer)) {
+                editor.ShowDialog(this);
+            }
+            // the editor holds the entire save file in memory; collect eagerly so
+            // repeated opens don't exhaust the 32-bit address space under Wine
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
         }
 
         private void LaunchCmExplorer() {

@@ -235,6 +235,16 @@ namespace CM0102_Starter_Kit {
         void LoadSelectedSave() {
             try {
                 Cursor = Cursors.WaitCursor;
+                // release the previous save BEFORE loading the next one: two saves
+                // held at once (~250 MB each) can exhaust the 32-bit address space
+                if (this.save != null) {
+                    this.save = null;
+                    this.clubGrid.Rows.Clear();
+                    this.playerGrid.Rows.Clear();
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    GC.Collect();
+                }
                 this.save = new SaveGame(Path.Combine(GameFolder, (string) this.saveSelector.SelectedItem));
                 this.save.Load();
                 this.status.Text = this.save.Clubs.Count.ToString("N0") + " clubs loaded from " + this.save.FileName + ".";
@@ -242,6 +252,13 @@ namespace CM0102_Starter_Kit {
                 this.playerNationFilter.Items.Clear();
                 RefreshClubList();
                 RefreshPlayerList();
+            } catch (OutOfMemoryException) {
+                this.save = null;
+                this.clubGrid.Rows.Clear();
+                this.playerGrid.Rows.Clear();
+                GC.Collect();
+                this.status.Text = "Not enough memory to load this save - close the Save Editor, " +
+                    "reopen it and load this save directly.";
             } catch (Exception exception) {
                 this.save = null;
                 this.clubGrid.Rows.Clear();
@@ -290,6 +307,21 @@ namespace CM0102_Starter_Kit {
             return row;
         }
 
+        /// <summary>Rows.Clear wipes the grid's sort state; re-apply the column
+        /// sort the user had chosen so refreshes (e.g. after a player edit) keep it.</summary>
+        static void ReplaceRowsKeepingSort(DataGridView grid, List<DataGridViewRow> rows) {
+            DataGridViewColumn sortedColumn = grid.SortedColumn;
+            SortOrder sortOrder = grid.SortOrder;
+            grid.Rows.Clear();
+            grid.Rows.AddRange(rows.ToArray());
+            if (sortedColumn != null && sortOrder != SortOrder.None) {
+                grid.Sort(sortedColumn, sortOrder == SortOrder.Descending
+                    ? System.ComponentModel.ListSortDirection.Descending
+                    : System.ComponentModel.ListSortDirection.Ascending);
+            }
+            grid.ClearSelection();
+        }
+
         void RefreshClubList() {
             List<DataGridViewRow> rows = new List<DataGridViewRow>();
             if (this.save != null) {
@@ -301,9 +333,7 @@ namespace CM0102_Starter_Kit {
                     }
                 }
             }
-            this.clubGrid.Rows.Clear();
-            this.clubGrid.Rows.AddRange(rows.ToArray());
-            this.clubGrid.ClearSelection();
+            ReplaceRowsKeepingSort(this.clubGrid, rows);
             this.writeButton.Enabled = false;
             this.selectedClub = null;
         }
@@ -329,9 +359,7 @@ namespace CM0102_Starter_Kit {
                     }
                 }
             }
-            this.playerGrid.Rows.Clear();
-            this.playerGrid.Rows.AddRange(rows.ToArray());
-            this.playerGrid.ClearSelection();
+            ReplaceRowsKeepingSort(this.playerGrid, rows);
         }
 
         void ShowSelectedClub() {
