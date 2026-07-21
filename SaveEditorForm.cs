@@ -76,6 +76,7 @@ namespace CM0102_Starter_Kit {
             this.Controls.Add(tabs);
             this.Controls.Add(this.status);
             this.Controls.Add(topBar);
+            UiHelper.AssignTabOrder(this);
         }
 
         static DataGridView MakeGrid() {

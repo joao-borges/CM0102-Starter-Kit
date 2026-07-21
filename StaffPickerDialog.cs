@@ -39,6 +39,7 @@ namespace CM0102_Starter_Kit {
             this.AcceptButton = ok;
             this.CancelButton = cancel;
             this.Controls.AddRange(new Control[] { hint, this.search, this.results, ok, none, cancel });
+            UiHelper.AssignTabOrder(this);
         }
 
         void RefreshResults() {
