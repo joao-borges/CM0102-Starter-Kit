@@ -45,7 +45,8 @@ namespace CM0102_Starter_Kit {
         readonly NumericUpDown[] positions = new NumericUpDown[12];
         NumericUpDown ability, potential, homeRep, currentRep, worldRep, value, wage, squadNumber;
         // Personal tab
-        NumericUpDown condition, fitness, morale, caps, intGoals;
+        NumericUpDown condition, fitness, morale, caps, intGoals, age;
+        int originalAge;
         CheckBox clearInjury;
         ComboBox nationality, secondNationality;
         readonly NumericUpDown[] mentals = new NumericUpDown[8];
@@ -221,7 +222,7 @@ namespace CM0102_Starter_Kit {
                 this.clearInjury.Enabled = false;
             }
 
-            GroupBox international = new GroupBox { Text = "Nationality && international record", Location = new Point(440, 8), Size = new Size(434, 160) };
+            GroupBox international = new GroupBox { Text = "Nationality && personal details", Location = new Point(440, 8), Size = new Size(434, 160) };
             international.Controls.Add(new Label { Text = "Nationality", Location = new Point(12, 26), AutoSize = true });
             this.nationality = MakeAutoCompleteCombo(220);
             this.nationality.Location = new Point(120, 22);
@@ -245,9 +246,13 @@ namespace CM0102_Starter_Kit {
             this.intGoals = MakeNumeric(0, 255);
             this.intGoals.Location = new Point(300, 90);
             international.Controls.Add(this.intGoals);
+            international.Controls.Add(new Label { Text = "Age", Location = new Point(12, 128), AutoSize = true });
+            this.age = MakeNumeric(14, 60);
+            this.age.Location = new Point(120, 124);
+            international.Controls.Add(this.age);
             international.Controls.Add(new Label {
-                Text = "Changing nationality affects eligibility rules;\nthe national team squad updates over time.",
-                Location = new Point(12, 122), AutoSize = true, ForeColor = Color.DimGray
+                Text = "Age edits move the birth year;\nnationality affects eligibility rules.",
+                Location = new Point(210, 120), AutoSize = true, ForeColor = Color.DimGray
             });
 
             GroupBox mentalsBox = new GroupBox { Text = "Mental attributes (0-20)", Location = new Point(8, 180), Size = new Size(866, 120) };
@@ -362,6 +367,14 @@ namespace CM0102_Starter_Kit {
             this.morale.Value = Clamp(this.save.ReadByte(recordBase + 69), 0, 20);
             this.caps.Value = this.save.ReadByte(this.player.StaffBase + 34);
             this.intGoals.Value = this.save.ReadByte(this.player.StaffBase + 35);
+            // age = game year - birth year (DOB TCMDate at staff +16: day/year/leap)
+            int birthYear = this.save.ReadInt16(this.player.StaffBase + 18);
+            if (birthYear > 1800) {
+                this.originalAge = (int) Clamp(this.save.GameYear - birthYear, 14, 60);
+                this.age.Value = this.originalAge;
+            } else {
+                this.age.Enabled = false;
+            }
             SelectNation(this.nationality, this.save.ReadInt32(this.player.StaffBase + 26), false);
             SelectNation(this.secondNationality, this.save.ReadInt32(this.player.StaffBase + 30), true);
             for (int i = 0; i < 8; i++) {
@@ -448,6 +461,18 @@ namespace CM0102_Starter_Kit {
             this.save.WriteByte(recordBase + 69, (byte) this.morale.Value);
             this.save.WriteByte(this.player.StaffBase + 34, (byte) this.caps.Value);
             this.save.WriteByte(this.player.StaffBase + 35, (byte) this.intGoals.Value);
+            if (this.age.Enabled && (int) this.age.Value != this.originalAge) {
+                // shift the birth YEAR only, keeping the birthday; the TCMDate leap
+                // flag must match the new year or in-game date maths drifts
+                short newBirthYear = (short) (this.save.GameYear - (int) this.age.Value);
+                bool leap = newBirthYear % 4 == 0;
+                this.save.WriteInt16(this.player.StaffBase + 18, newBirthYear);
+                this.save.WriteInt32(this.player.StaffBase + 20, leap ? 1 : 0);
+                if (!leap && this.save.ReadInt16(this.player.StaffBase + 16) >= 366) {
+                    this.save.WriteInt16(this.player.StaffBase + 16, 365);
+                }
+                this.player.Age = (int) this.age.Value;
+            }
             this.save.WriteInt32(this.player.StaffBase + 26,
                 ResolveNation(this.nationality, this.save.ReadInt32(this.player.StaffBase + 26)));
             this.save.WriteInt32(this.player.StaffBase + 30,

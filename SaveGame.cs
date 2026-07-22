@@ -219,6 +219,7 @@ namespace CM0102_Starter_Kit {
         public IList<PlayerRef> Players { get { return this.players; } }
         public IList<Nation> Nations { get { return this.nations; } }
         public IList<StaffEntry> StaffDirectory { get { return this.staffDirectory; } }
+        public int GameYear { get { return this.gameYear; } }
 
         public string StaffNameById(int staffId) {
             string name;
