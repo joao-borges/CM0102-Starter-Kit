@@ -215,11 +215,13 @@ namespace CM0102_Starter_Kit {
         readonly Dictionary<int, string> staffNamesById = new Dictionary<int, string>();
         bool playersLoaded;
         int gameYear;
+        int gameDay;
 
         public IList<PlayerRef> Players { get { return this.players; } }
         public IList<Nation> Nations { get { return this.nations; } }
         public IList<StaffEntry> StaffDirectory { get { return this.staffDirectory; } }
         public int GameYear { get { return this.gameYear; } }
+        public int GameDay { get { return this.gameDay; } }
 
         public string StaffNameById(int staffId) {
             string name;
@@ -247,6 +249,7 @@ namespace CM0102_Starter_Kit {
             List<string> secondNames = ReadNames("second_names.dat");
             List<string> commonNames = ReadNames("common_names.dat");
             Block generalBlock = this.blocks["general.dat"];
+            this.gameDay = BitConverter.ToInt16(this.data, generalBlock.Pos + 3944);
             this.gameYear = BitConverter.ToInt16(this.data, generalBlock.Pos + 3944 + 2);
 
             Dictionary<int, string> clubNames = new Dictionary<int, string>();
@@ -323,6 +326,7 @@ namespace CM0102_Starter_Kit {
                 }
                 int nationId = BitConverter.ToInt32(this.data, staffBase + 26);
                 string nationName;
+                int birthDay = BitConverter.ToInt16(this.data, staffBase + 16);
                 int birthYear = BitConverter.ToInt16(this.data, staffBase + 18);
                 int contractBase;
                 int fitnessBase = injuryBlock != null && (record + 1) * 31 <= injuryBlock.Size
@@ -341,7 +345,9 @@ namespace CM0102_Starter_Kit {
                     ClubName = clubName,
                     Nation = nationNames.TryGetValue(nationId, out nationName) ? nationName : "-",
                     Position = PositionString(playerBase),
-                    Age = birthYear > 1800 ? this.gameYear - birthYear : 0
+                    // birthday-aware, like the game shows it
+                    Age = birthYear > 1800
+                        ? this.gameYear - birthYear - (this.gameDay < birthDay ? 1 : 0) : 0
                 });
             }
             this.playersLoaded = true;

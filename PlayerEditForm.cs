@@ -45,9 +45,18 @@ namespace CM0102_Starter_Kit {
         readonly NumericUpDown[] positions = new NumericUpDown[12];
         NumericUpDown ability, potential, homeRep, currentRep, worldRep, value, wage, squadNumber;
         // Personal tab
-        NumericUpDown condition, fitness, morale, caps, intGoals, age;
-        int originalAge;
+        NumericUpDown condition, fitness, morale, caps, intGoals;
+        NumericUpDown dobDay, dobYear;
+        ComboBox dobMonth;
+        Label ageLabel;
+        int originalDobDay, originalDobMonth, originalDobYear;   // day-of-month, 1-based month, year
         CheckBox clearInjury;
+
+        static readonly int[] MonthDays = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+        static readonly string[] MonthNames = {
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        };
         ComboBox nationality, secondNationality;
         readonly NumericUpDown[] mentals = new NumericUpDown[8];
         // Likes & dislikes tab
@@ -246,14 +255,27 @@ namespace CM0102_Starter_Kit {
             this.intGoals = MakeNumeric(0, 255);
             this.intGoals.Location = new Point(300, 90);
             international.Controls.Add(this.intGoals);
-            international.Controls.Add(new Label { Text = "Age", Location = new Point(12, 128), AutoSize = true });
-            this.age = MakeNumeric(14, 60);
-            this.age.Location = new Point(120, 124);
-            international.Controls.Add(this.age);
-            international.Controls.Add(new Label {
-                Text = "Age edits move the birth year;\nnationality affects eligibility rules.",
-                Location = new Point(210, 120), AutoSize = true, ForeColor = Color.DimGray
-            });
+            international.Controls.Add(new Label { Text = "Born", Location = new Point(12, 128), AutoSize = true });
+            this.dobDay = MakeNumeric(1, 31);
+            this.dobDay.Width = 45;
+            this.dobDay.Location = new Point(58, 124);
+            international.Controls.Add(this.dobDay);
+            this.dobMonth = new ComboBox {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Location = new Point(110, 124), Width = 100
+            };
+            this.dobMonth.Items.AddRange(MonthNames);
+            international.Controls.Add(this.dobMonth);
+            this.dobYear = MakeNumeric(1920, 2090);
+            this.dobYear.Width = 62;
+            this.dobYear.Location = new Point(217, 124);
+            international.Controls.Add(this.dobYear);
+            this.ageLabel = new Label { Text = "", Location = new Point(292, 128), AutoSize = true, ForeColor = Color.DimGray };
+            international.Controls.Add(this.ageLabel);
+            EventHandler refreshAge = (s, e) => RefreshAgeLabel();
+            this.dobDay.ValueChanged += refreshAge;
+            this.dobMonth.SelectedIndexChanged += refreshAge;
+            this.dobYear.ValueChanged += refreshAge;
 
             GroupBox mentalsBox = new GroupBox { Text = "Mental attributes (0-20)", Location = new Point(8, 180), Size = new Size(866, 120) };
             for (int i = 0; i < 8; i++) {
@@ -367,14 +389,27 @@ namespace CM0102_Starter_Kit {
             this.morale.Value = Clamp(this.save.ReadByte(recordBase + 69), 0, 20);
             this.caps.Value = this.save.ReadByte(this.player.StaffBase + 34);
             this.intGoals.Value = this.save.ReadByte(this.player.StaffBase + 35);
-            // age = game year - birth year (DOB TCMDate at staff +16: day/year/leap)
+            // DOB TCMDate at staff +16: day-of-year int16 (0-BASED: 0 = Jan 1, verified
+            // over the whole staff table), year int16, leap int32
             int birthYear = this.save.ReadInt16(this.player.StaffBase + 18);
-            if (birthYear > 1800) {
-                this.originalAge = (int) Clamp(this.save.GameYear - birthYear, 14, 60);
-                this.age.Value = this.originalAge;
+            int birthDayOfYear = this.save.ReadInt16(this.player.StaffBase + 16);
+            if (birthYear > 1800 && birthDayOfYear >= 0 && birthDayOfYear <= 365) {
+                int month = 0, remaining = birthDayOfYear + 1;
+                while (month < 11 && remaining > DaysInMonth(month, birthYear)) {
+                    remaining -= DaysInMonth(month, birthYear);
+                    month++;
+                }
+                this.originalDobDay = remaining;
+                this.originalDobMonth = month;
+                this.originalDobYear = birthYear;
+                this.dobYear.Value = Clamp(birthYear, this.dobYear.Minimum, this.dobYear.Maximum);
+                this.dobMonth.SelectedIndex = month;
+                this.dobDay.Value = Clamp(remaining, 1, 31);
             } else {
-                this.age.Enabled = false;
+                this.dobDay.Enabled = this.dobMonth.Enabled = this.dobYear.Enabled = false;
+                this.ageLabel.Text = "(no birth date)";
             }
+            RefreshAgeLabel();
             SelectNation(this.nationality, this.save.ReadInt32(this.player.StaffBase + 26), false);
             SelectNation(this.secondNationality, this.save.ReadInt32(this.player.StaffBase + 30), true);
             for (int i = 0; i < 8; i++) {
@@ -461,17 +496,21 @@ namespace CM0102_Starter_Kit {
             this.save.WriteByte(recordBase + 69, (byte) this.morale.Value);
             this.save.WriteByte(this.player.StaffBase + 34, (byte) this.caps.Value);
             this.save.WriteByte(this.player.StaffBase + 35, (byte) this.intGoals.Value);
-            if (this.age.Enabled && (int) this.age.Value != this.originalAge) {
-                // shift the birth YEAR only, keeping the birthday; the TCMDate leap
-                // flag must match the new year or in-game date maths drifts
-                short newBirthYear = (short) (this.save.GameYear - (int) this.age.Value);
-                bool leap = newBirthYear % 4 == 0;
-                this.save.WriteInt16(this.player.StaffBase + 18, newBirthYear);
-                this.save.WriteInt32(this.player.StaffBase + 20, leap ? 1 : 0);
-                if (!leap && this.save.ReadInt16(this.player.StaffBase + 16) >= 366) {
-                    this.save.WriteInt16(this.player.StaffBase + 16, 365);
+            if (this.dobDay.Enabled &&
+                ((int) this.dobDay.Value != this.originalDobDay ||
+                 this.dobMonth.SelectedIndex != this.originalDobMonth ||
+                 (int) this.dobYear.Value != this.originalDobYear)) {
+                int year = (int) this.dobYear.Value;
+                int month = this.dobMonth.SelectedIndex;
+                int dayOfMonth = Math.Min((int) this.dobDay.Value, DaysInMonth(month, year));
+                int dayOfYear = dayOfMonth - 1;          // back to the 0-based store
+                for (int m = 0; m < month; m++) {
+                    dayOfYear += DaysInMonth(m, year);
                 }
-                this.player.Age = (int) this.age.Value;
+                this.save.WriteInt16(this.player.StaffBase + 16, (short) dayOfYear);
+                this.save.WriteInt16(this.player.StaffBase + 18, (short) year);
+                this.save.WriteInt32(this.player.StaffBase + 20, year % 4 == 0 ? 1 : 0);
+                this.player.Age = CurrentAge(dayOfYear, year);
             }
             this.save.WriteInt32(this.player.StaffBase + 26,
                 ResolveNation(this.nationality, this.save.ReadInt32(this.player.StaffBase + 26)));
@@ -501,6 +540,33 @@ namespace CM0102_Starter_Kit {
 
         static decimal Clamp(decimal value, decimal min, decimal max) {
             return Math.Min(Math.Max(value, min), max);
+        }
+
+        static int DaysInMonth(int month, int year) {
+            return month == 1 && year % 4 == 0 ? 29 : MonthDays[month];
+        }
+
+        /// <summary>Age at the current game date, counting whether the birthday
+        /// (as a day-of-year) has been reached this year - matches the game.</summary>
+        int CurrentAge(int birthDayOfYear, int birthYear) {
+            int age = this.save.GameYear - birthYear;
+            if (this.save.GameDay < birthDayOfYear) {
+                age--;
+            }
+            return Math.Max(age, 0);
+        }
+
+        void RefreshAgeLabel() {
+            if (!this.dobDay.Enabled || this.dobMonth.SelectedIndex < 0) {
+                return;
+            }
+            int year = (int) this.dobYear.Value;
+            int month = this.dobMonth.SelectedIndex;
+            int dayOfYear = Math.Min((int) this.dobDay.Value, DaysInMonth(month, year)) - 1;
+            for (int m = 0; m < month; m++) {
+                dayOfYear += DaysInMonth(m, year);
+            }
+            this.ageLabel.Text = "Age: " + CurrentAge(dayOfYear, year);
         }
 
         static bool UsesHighBranch(Kind kind, bool goalkeeper) {
