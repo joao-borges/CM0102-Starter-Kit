@@ -178,8 +178,17 @@ namespace CM0102_Starter_Kit {
                 DropDownStyle = ComboBoxStyle.DropDown,
                 Location = new Point(x, 5), Width = width
             };
-            ComboBoxAutoComplete.Attach(combo);
+            ComboBoxAutoComplete.AttachFilter(combo);
             return combo;
+        }
+
+        /// <summary>Sets a filter combo's choices; the full list is kept in Tag so
+        /// AttachFilter can rebuild the dropdown as the user types.</summary>
+        static void SetFilterItems(ComboBox combo, string[] items) {
+            combo.Tag = items;
+            combo.Items.Clear();
+            combo.Items.AddRange(items);
+            combo.Text = "";
         }
 
         void BuildPlayersPage(TabPage page) {
@@ -316,8 +325,8 @@ namespace CM0102_Starter_Kit {
                 this.save.Load();
                 this.status.Text = this.save.Clubs.Count.ToString("N0") + " clubs loaded from " + this.save.FileName + ".";
                 PopulateClubFilter();
-                this.playerNationFilter.Items.Clear();
-                this.staffNationFilter.Items.Clear();
+                SetFilterItems(this.playerNationFilter, new string[0]);
+                SetFilterItems(this.staffNationFilter, new string[0]);
                 RefreshClubList();
                 RefreshPlayerList();
                 RefreshStaffList();
@@ -339,12 +348,8 @@ namespace CM0102_Starter_Kit {
                 names.Add(club.LongName);
             }
             names.Sort(StringComparer.CurrentCultureIgnoreCase);
-            this.playerClubFilter.Items.Clear();
-            this.playerClubFilter.Items.AddRange(names.ToArray());
-            this.playerClubFilter.Text = "";
-            this.staffClubFilter.Items.Clear();
-            this.staffClubFilter.Items.AddRange(names.ToArray());
-            this.staffClubFilter.Text = "";
+            SetFilterItems(this.playerClubFilter, names.ToArray());
+            SetFilterItems(this.staffClubFilter, names.ToArray());
         }
 
         void EnsurePlayersLoaded() {
@@ -352,12 +357,12 @@ namespace CM0102_Starter_Kit {
             try {
                 Cursor = Cursors.WaitCursor;
                 this.save.LoadPlayers();
-                this.playerNationFilter.Items.Clear();
-                this.staffNationFilter.Items.Clear();
+                List<string> nationNames = new List<string>();
                 foreach (SaveGame.Nation nation in this.save.Nations) {
-                    this.playerNationFilter.Items.Add(nation.Name);
-                    this.staffNationFilter.Items.Add(nation.Name);
+                    nationNames.Add(nation.Name);
                 }
+                SetFilterItems(this.playerNationFilter, nationNames.ToArray());
+                SetFilterItems(this.staffNationFilter, nationNames.ToArray());
                 this.status.Text = this.save.Players.Count.ToString("N0") + " players and " +
                     this.save.StaffMembers.Count.ToString("N0") + " non-player staff indexed.";
                 RefreshPlayerList();

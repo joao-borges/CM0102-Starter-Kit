@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace CM0102_Starter_Kit {
@@ -11,6 +12,67 @@ namespace CM0102_Starter_Kit {
     /// selected, keep typing (or press Backspace) to refine.
     /// </summary>
     static class ComboBoxAutoComplete {
+        /// <summary>
+        /// Contains-style filtering for the list-filter combos: typing rebuilds the
+        /// dropdown to show ONLY items containing the typed text (anywhere in the
+        /// name, case-insensitive) and opens it. The full choice list lives in
+        /// combo.Tag as a string[] - callers must set it whenever the choices
+        /// change (SetFilterItems in SaveEditorForm). No append-completion here:
+        /// the typed text is left alone, it doubles as the grid filter.
+        /// </summary>
+        public static void AttachFilter(ComboBox combo) {
+            bool[] updating = { false };
+            combo.TextUpdate += (s, e) => {
+                if (updating[0]) {
+                    return;
+                }
+                string[] all = combo.Tag as string[];
+                if (all == null) {
+                    return;
+                }
+                string typed = combo.Text.Trim();
+                List<string> matches = new List<string>();
+                if (typed.Length == 0) {
+                    matches.AddRange(all);
+                } else {
+                    foreach (string item in all) {
+                        if (item.IndexOf(typed, StringComparison.CurrentCultureIgnoreCase) >= 0) {
+                            matches.Add(item);
+                        }
+                    }
+                }
+                updating[0] = true;
+                try {
+                    string text = combo.Text;
+                    combo.Items.Clear();
+                    if (matches.Count > 0) {
+                        combo.Items.AddRange(matches.ToArray());
+                    }
+                    if (typed.Length > 0 && matches.Count > 0 && !combo.DroppedDown) {
+                        try {
+                            combo.DroppedDown = true;
+                            Cursor.Current = Cursors.Default;   // DroppedDown leaves a wait cursor
+                        } catch (Exception) {
+                            // headless/odd environments cannot open the popup; the
+                            // items are filtered either way
+                        }
+                    }
+                    // rebuilding/opening auto-selects an item under Mono WinForms,
+                    // clobbering the box - re-assert the typed text LAST
+                    if (combo.SelectedIndex != -1) {
+                        combo.SelectedIndex = -1;
+                    }
+                    if (combo.Text != text) {
+                        combo.Text = text;
+                    }
+                    combo.SelectionStart = text.Length;
+                    combo.SelectionLength = 0;
+                } finally {
+                    updating[0] = false;
+                }
+            };
+        }
+
         public static void Attach(ComboBox combo) {
             bool[] deleting = { false }, updating = { false };
             combo.KeyDown += (s, e) => {
