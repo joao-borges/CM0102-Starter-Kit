@@ -2,6 +2,25 @@ using System.Windows.Forms;
 
 namespace CM0102_Starter_Kit {
     static class UiHelper {
+        internal static readonly int[] MonthDays = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+        internal static readonly string[] MonthNames = {
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        };
+
+        internal static int DaysInMonth(int month, int year) {
+            return month == 1 && year % 4 == 0 ? 29 : MonthDays[month];
+        }
+
+        /// <summary>Editable combo with the manual (Wine-safe) append autocomplete.</summary>
+        internal static ComboBox MakeAutoCompleteCombo(int width) {
+            ComboBox combo = new ComboBox {
+                DropDownStyle = ComboBoxStyle.DropDown,
+                Width = width
+            };
+            ComboBoxAutoComplete.Attach(combo);
+            return combo;
+        }
         /// <summary>
         /// Gives every control an explicit TabIndex following the order it was
         /// added to its container (which in these code-built forms is the visual

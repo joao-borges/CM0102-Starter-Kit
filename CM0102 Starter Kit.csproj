@@ -80,6 +80,9 @@
     <Compile Include="Helper.cs" />
     <Compile Include="SaveGame.cs" />
     <Compile Include="UiHelper.cs" />
+    <Compile Include="StaffEditForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="StaffPickerDialog.cs">
       <SubType>Form</SubType>
     </Compile>

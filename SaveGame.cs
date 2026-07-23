@@ -213,6 +213,7 @@ namespace CM0102_Starter_Kit {
         }
 
         readonly List<PlayerRef> players = new List<PlayerRef>();
+        readonly List<PlayerRef> staffMembers = new List<PlayerRef>();   // PlayerBase = -1
         readonly List<Nation> nations = new List<Nation>();
         readonly List<StaffEntry> staffDirectory = new List<StaffEntry>();
         readonly Dictionary<int, string> staffNamesById = new Dictionary<int, string>();
@@ -221,6 +222,9 @@ namespace CM0102_Starter_Kit {
         int gameDay;
 
         public IList<PlayerRef> Players { get { return this.players; } }
+        /// <summary>Non-player staff (managers, coaches, retired players...); the same
+        /// record shape as Players but with PlayerBase = -1 and no Position.</summary>
+        public IList<PlayerRef> StaffMembers { get { return this.staffMembers; } }
         public IList<Nation> Nations { get { return this.nations; } }
         public IList<StaffEntry> StaffDirectory { get { return this.staffDirectory; } }
         public int GameYear { get { return this.gameYear; } }
@@ -368,10 +372,8 @@ namespace CM0102_Starter_Kit {
                 this.staffDirectory.Add(new StaffEntry { Id = staffId, Name = name, ClubName = clubName });
 
                 int playerId = BitConverter.ToInt32(staffBuffer, staffBase + 97);
-                int playerRecordBase;
-                if (playerId < 0 || !playerRecordBases.TryGetValue(playerId, out playerRecordBase)) {
-                    continue;
-                }
+                int playerRecordBase = -1;
+                bool isPlayer = playerId >= 0 && playerRecordBases.TryGetValue(playerId, out playerRecordBase);
                 int nationId = BitConverter.ToInt32(staffBuffer, staffBase + 26);
                 string nationName;
                 int birthDay = BitConverter.ToInt16(staffBuffer, staffBase + 16);
@@ -382,21 +384,26 @@ namespace CM0102_Starter_Kit {
                 int prefsBase = prefsBuffer != null && staffId >= 0 && staffId < prefsCount &&
                     BitConverter.ToInt32(prefsBuffer, staffId * 52) == staffId
                     ? prefsBlock.Pos + staffId * 52 : -1;
-                this.players.Add(new PlayerRef {
+                PlayerRef reference = new PlayerRef {
                     StaffId = staffId,
                     StaffBase = staffBlock.Pos + staffBase,
-                    PlayerBase = playerBlock.Pos + playerRecordBase,
+                    PlayerBase = isPlayer ? playerBlock.Pos + playerRecordBase : -1,
                     ContractBase = contractOffsets.TryGetValue(staffId, out contractBase) ? contractBase : -1,
                     FitnessBase = fitnessBase,
                     PrefsBase = prefsBase,
                     Name = name,
                     ClubName = clubName,
                     Nation = nationNames.TryGetValue(nationId, out nationName) ? nationName : "-",
-                    Position = PositionString(playerBuffer, playerRecordBase),
+                    Position = isPlayer ? PositionString(playerBuffer, playerRecordBase) : "",
                     // birthday-aware, like the game shows it
                     Age = birthYear > 1800
                         ? this.gameYear - birthYear - (this.gameDay < birthDay ? 1 : 0) : 0
-                });
+                };
+                if (isPlayer) {
+                    this.players.Add(reference);
+                } else {
+                    this.staffMembers.Add(reference);
+                }
             }
             this.playersLoaded = true;
         }

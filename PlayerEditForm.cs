@@ -52,11 +52,6 @@ namespace CM0102_Starter_Kit {
         int originalDobDay, originalDobMonth, originalDobYear;   // day-of-month, 1-based month, year
         CheckBox clearInjury;
 
-        static readonly int[] MonthDays = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-        static readonly string[] MonthNames = {
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
-        };
         ComboBox nationality, secondNationality;
         readonly NumericUpDown[] mentals = new NumericUpDown[8];
         // Likes & dislikes tab
@@ -121,15 +116,6 @@ namespace CM0102_Starter_Kit {
 
         static NumericUpDown MakeNumeric(int min, int max) {
             return new NumericUpDown { Minimum = min, Maximum = max, Width = 55 };
-        }
-
-        ComboBox MakeAutoCompleteCombo(int width) {
-            ComboBox combo = new ComboBox {
-                DropDownStyle = ComboBoxStyle.DropDown,
-                Width = width
-            };
-            ComboBoxAutoComplete.Attach(combo);
-            return combo;
         }
 
         void BuildControls() {
@@ -233,11 +219,11 @@ namespace CM0102_Starter_Kit {
 
             GroupBox international = new GroupBox { Text = "Nationality && personal details", Location = new Point(440, 8), Size = new Size(434, 160) };
             international.Controls.Add(new Label { Text = "Nationality", Location = new Point(12, 26), AutoSize = true });
-            this.nationality = MakeAutoCompleteCombo(220);
+            this.nationality = UiHelper.MakeAutoCompleteCombo(220);
             this.nationality.Location = new Point(120, 22);
             international.Controls.Add(this.nationality);
             international.Controls.Add(new Label { Text = "2nd nationality", Location = new Point(12, 60), AutoSize = true });
-            this.secondNationality = MakeAutoCompleteCombo(220);
+            this.secondNationality = UiHelper.MakeAutoCompleteCombo(220);
             this.secondNationality.Location = new Point(120, 56);
             international.Controls.Add(this.secondNationality);
             List<object> nationItems = new List<object>();
@@ -264,7 +250,7 @@ namespace CM0102_Starter_Kit {
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Location = new Point(110, 124), Width = 100
             };
-            this.dobMonth.Items.AddRange(MonthNames);
+            this.dobMonth.Items.AddRange(UiHelper.MonthNames);
             international.Controls.Add(this.dobMonth);
             this.dobYear = MakeNumeric(1920, 2090);
             this.dobYear.Width = 62;
@@ -312,7 +298,7 @@ namespace CM0102_Starter_Kit {
             for (int group = 0; group < 2; group++) {
                 GroupBox box = new GroupBox { Text = groupTitles[group], Location = new Point(8 + group * 436, 8), Size = new Size(428, 140) };
                 for (int slot = 0; slot < 3; slot++) {
-                    ComboBox combo = MakeAutoCompleteCombo(390);
+                    ComboBox combo = UiHelper.MakeAutoCompleteCombo(390);
                     combo.Location = new Point(15, 24 + slot * 36);
                     combo.Items.AddRange(clubItemArray);
                     box.Controls.Add(combo);
@@ -395,8 +381,8 @@ namespace CM0102_Starter_Kit {
             int birthDayOfYear = this.save.ReadInt16(this.player.StaffBase + 16);
             if (birthYear > 1800 && birthDayOfYear >= 0 && birthDayOfYear <= 365) {
                 int month = 0, remaining = birthDayOfYear + 1;
-                while (month < 11 && remaining > DaysInMonth(month, birthYear)) {
-                    remaining -= DaysInMonth(month, birthYear);
+                while (month < 11 && remaining > UiHelper.DaysInMonth(month, birthYear)) {
+                    remaining -= UiHelper.DaysInMonth(month, birthYear);
                     month++;
                 }
                 this.originalDobDay = remaining;
@@ -502,10 +488,10 @@ namespace CM0102_Starter_Kit {
                  (int) this.dobYear.Value != this.originalDobYear)) {
                 int year = (int) this.dobYear.Value;
                 int month = this.dobMonth.SelectedIndex;
-                int dayOfMonth = Math.Min((int) this.dobDay.Value, DaysInMonth(month, year));
+                int dayOfMonth = Math.Min((int) this.dobDay.Value, UiHelper.DaysInMonth(month, year));
                 int dayOfYear = dayOfMonth - 1;          // back to the 0-based store
                 for (int m = 0; m < month; m++) {
-                    dayOfYear += DaysInMonth(m, year);
+                    dayOfYear += UiHelper.DaysInMonth(m, year);
                 }
                 this.save.WriteInt16(this.player.StaffBase + 16, (short) dayOfYear);
                 this.save.WriteInt16(this.player.StaffBase + 18, (short) year);
@@ -542,10 +528,6 @@ namespace CM0102_Starter_Kit {
             return Math.Min(Math.Max(value, min), max);
         }
 
-        static int DaysInMonth(int month, int year) {
-            return month == 1 && year % 4 == 0 ? 29 : MonthDays[month];
-        }
-
         /// <summary>Age at the current game date, counting whether the birthday
         /// (as a day-of-year) has been reached this year - matches the game.</summary>
         int CurrentAge(int birthDayOfYear, int birthYear) {
@@ -562,9 +544,9 @@ namespace CM0102_Starter_Kit {
             }
             int year = (int) this.dobYear.Value;
             int month = this.dobMonth.SelectedIndex;
-            int dayOfYear = Math.Min((int) this.dobDay.Value, DaysInMonth(month, year)) - 1;
+            int dayOfYear = Math.Min((int) this.dobDay.Value, UiHelper.DaysInMonth(month, year)) - 1;
             for (int m = 0; m < month; m++) {
-                dayOfYear += DaysInMonth(m, year);
+                dayOfYear += UiHelper.DaysInMonth(m, year);
             }
             this.ageLabel.Text = "Age: " + CurrentAge(dayOfYear, year);
         }

@@ -31,6 +31,10 @@ namespace CM0102_Starter_Kit {
         TextBox playerSearch;
         ComboBox playerClubFilter, playerNationFilter;
         DataGridView playerGrid;
+        // staff tab
+        TextBox staffSearch;
+        ComboBox staffClubFilter, staffNationFilter;
+        DataGridView staffGrid;
         readonly Action launchLegacyExplorer;
 
         public SaveEditorForm(Action launchLegacyExplorer) {
@@ -62,14 +66,17 @@ namespace CM0102_Starter_Kit {
             TabControl tabs = new TabControl { Dock = DockStyle.Fill };
             TabPage clubsPage = new TabPage("Clubs") { Padding = new Padding(6) };
             TabPage playersPage = new TabPage("Players") { Padding = new Padding(6) };
+            TabPage staffPage = new TabPage("Staff") { Padding = new Padding(6) };
             tabs.TabPages.Add(clubsPage);
             tabs.TabPages.Add(playersPage);
+            tabs.TabPages.Add(staffPage);
             tabs.SelectedIndexChanged += (s, e) => {
-                if (tabs.SelectedTab == playersPage) EnsurePlayersLoaded();
+                if (tabs.SelectedTab == playersPage || tabs.SelectedTab == staffPage) EnsurePlayersLoaded();
             };
 
             BuildClubsPage(clubsPage);
             BuildPlayersPage(playersPage);
+            BuildStaffPage(staffPage);
 
             // dock layout processes the collection back to front: add the filling
             // control first so the edge-docked bars claim their space before it
@@ -213,6 +220,42 @@ namespace CM0102_Starter_Kit {
             page.Controls.Add(filterBar);
         }
 
+        void BuildStaffPage(TabPage page) {
+            Panel filterBar = new Panel { Dock = DockStyle.Top, Height = 34 };
+            Label searchLabel = new Label { Text = "Name:", AutoSize = true, Location = new Point(4, 8) };
+            this.staffSearch = new TextBox { Location = new Point(52, 5), Width = 180 };
+            this.staffSearch.TextChanged += (s, e) => RefreshStaffList();
+            Label clubLabel = new Label { Text = "Club:", AutoSize = true, Location = new Point(246, 8) };
+            this.staffClubFilter = MakeFilterCombo(286, 190);
+            this.staffClubFilter.TextChanged += (s, e) => RefreshStaffList();
+            Label nationLabel = new Label { Text = "Nation:", AutoSize = true, Location = new Point(490, 8) };
+            this.staffNationFilter = MakeFilterCombo(542, 150);
+            this.staffNationFilter.TextChanged += (s, e) => RefreshStaffList();
+            filterBar.Controls.AddRange(new Control[] {
+                searchLabel, this.staffSearch, clubLabel, this.staffClubFilter, nationLabel, this.staffNationFilter
+            });
+
+            Label hint = new Label {
+                Text = "Managers, coaches, scouts and retired players. Fill any filter (3+ letters; nation 2+), then double-click to edit.",
+                Dock = DockStyle.Bottom, Height = 22, ForeColor = Color.DimGray,
+                Padding = new Padding(4, 6, 0, 0)
+            };
+
+            this.staffGrid = MakeGrid();
+            AddGridColumn(this.staffGrid, "Name", 200, false);
+            AddGridColumn(this.staffGrid, "Age", 45, true);
+            AddGridColumn(this.staffGrid, "Club", 200, false);
+            AddGridColumn(this.staffGrid, "Nation", 130, false);
+            AddGridColumn(this.staffGrid, "Value", 100, true);
+            this.staffGrid.CellDoubleClick += (s, e) => {
+                if (e.RowIndex >= 0) EditSelectedStaff();
+            };
+
+            page.Controls.Add(this.staffGrid);
+            page.Controls.Add(hint);
+            page.Controls.Add(filterBar);
+        }
+
         void RefreshSaveList() {
             this.saveSelector.Items.Clear();
             if (Directory.Exists(GameFolder)) {
@@ -240,6 +283,7 @@ namespace CM0102_Starter_Kit {
             }
             this.clubGrid.Rows.Clear();
             this.playerGrid.Rows.Clear();
+            this.staffGrid.Rows.Clear();
         }
 
         protected override void Dispose(bool disposing) {
@@ -259,8 +303,10 @@ namespace CM0102_Starter_Kit {
                 this.status.Text = this.save.Clubs.Count.ToString("N0") + " clubs loaded from " + this.save.FileName + ".";
                 PopulateClubFilter();
                 this.playerNationFilter.Items.Clear();
+                this.staffNationFilter.Items.Clear();
                 RefreshClubList();
                 RefreshPlayerList();
+                RefreshStaffList();
             } catch (OutOfMemoryException) {
                 CloseCurrentSave();
                 GC.Collect();
@@ -282,6 +328,9 @@ namespace CM0102_Starter_Kit {
             this.playerClubFilter.Items.Clear();
             this.playerClubFilter.Items.AddRange(names.ToArray());
             this.playerClubFilter.Text = "";
+            this.staffClubFilter.Items.Clear();
+            this.staffClubFilter.Items.AddRange(names.ToArray());
+            this.staffClubFilter.Text = "";
         }
 
         void EnsurePlayersLoaded() {
@@ -290,11 +339,15 @@ namespace CM0102_Starter_Kit {
                 Cursor = Cursors.WaitCursor;
                 this.save.LoadPlayers();
                 this.playerNationFilter.Items.Clear();
+                this.staffNationFilter.Items.Clear();
                 foreach (SaveGame.Nation nation in this.save.Nations) {
                     this.playerNationFilter.Items.Add(nation.Name);
+                    this.staffNationFilter.Items.Add(nation.Name);
                 }
-                this.status.Text = this.save.Players.Count.ToString("N0") + " players indexed.";
+                this.status.Text = this.save.Players.Count.ToString("N0") + " players and " +
+                    this.save.StaffMembers.Count.ToString("N0") + " non-player staff indexed.";
                 RefreshPlayerList();
+                RefreshStaffList();
             } catch (Exception exception) {
                 this.status.Text = exception.Message;
             } finally {
@@ -364,6 +417,47 @@ namespace CM0102_Starter_Kit {
                 }
             }
             ReplaceRowsKeepingSort(this.playerGrid, rows);
+        }
+
+        void RefreshStaffList() {
+            List<DataGridViewRow> rows = new List<DataGridViewRow>();
+            if (this.save != null && this.save.StaffMembers.Count > 0) {
+                string name = this.staffSearch.Text.Trim().ToLower();
+                string club = this.staffClubFilter.Text.Trim().ToLower();
+                string nation = this.staffNationFilter.Text.Trim().ToLower();
+                if (name.Length >= 3 || club.Length >= 3 || nation.Length >= 2) {
+                    foreach (SaveGame.PlayerRef person in this.save.StaffMembers) {
+                        if (name.Length > 0 && !person.Name.ToLower().Contains(name)) continue;
+                        if (club.Length > 0 && !person.ClubName.ToLower().Contains(club)) continue;
+                        if (nation.Length > 0 && !person.Nation.ToLower().Contains(nation)) continue;
+                        rows.Add(MakeRow(this.staffGrid, person,
+                            person.Name, (long) person.Age, person.ClubName, person.Nation,
+                            (long) this.save.ReadInt32(person.StaffBase + 82)));
+                        if (rows.Count >= 400) break;
+                    }
+                }
+            }
+            ReplaceRowsKeepingSort(this.staffGrid, rows);
+        }
+
+        void EditSelectedStaff() {
+            if (this.save == null || this.staffGrid.SelectedRows.Count == 0) return;
+            SaveGame.PlayerRef person = this.staffGrid.SelectedRows[0].Tag as SaveGame.PlayerRef;
+            if (person == null) return;
+            using (StaffEditForm editor = new StaffEditForm(this.save, person)) {
+                if (editor.ShowDialog(this) != DialogResult.OK) return;
+            }
+            if (BlockedByRunningGame()) {
+                this.status.Text = "Edit NOT saved - game running. Reopen the editor after exiting the game.";
+                return;
+            }
+            try {
+                string backup = this.save.Save();
+                this.status.Text = person.Name + " updated. Backup: " + Path.GetFileName(backup);
+                RefreshStaffList();
+            } catch (Exception exception) {
+                this.status.Text = exception.Message;
+            }
         }
 
         void ShowSelectedClub() {
