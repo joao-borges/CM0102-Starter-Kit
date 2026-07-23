@@ -233,19 +233,27 @@ namespace CM0102_Starter_Kit {
             return Process.GetProcessesByName("cm0102").Length > 0;
         }
 
+        void CloseCurrentSave() {
+            if (this.save != null) {
+                this.save.Dispose();
+                this.save = null;
+            }
+            this.clubGrid.Rows.Clear();
+            this.playerGrid.Rows.Clear();
+        }
+
+        protected override void Dispose(bool disposing) {
+            if (disposing && this.save != null) {
+                this.save.Dispose();
+                this.save = null;
+            }
+            base.Dispose(disposing);
+        }
+
         void LoadSelectedSave() {
             try {
                 Cursor = Cursors.WaitCursor;
-                // release the previous save BEFORE loading the next one: two saves
-                // held at once (~250 MB each) can exhaust the 32-bit address space
-                if (this.save != null) {
-                    this.save = null;
-                    this.clubGrid.Rows.Clear();
-                    this.playerGrid.Rows.Clear();
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                    GC.Collect();
-                }
+                CloseCurrentSave();
                 this.save = new SaveGame(Path.Combine(GameFolder, (string) this.saveSelector.SelectedItem));
                 this.save.Load();
                 this.status.Text = this.save.Clubs.Count.ToString("N0") + " clubs loaded from " + this.save.FileName + ".";
@@ -254,16 +262,11 @@ namespace CM0102_Starter_Kit {
                 RefreshClubList();
                 RefreshPlayerList();
             } catch (OutOfMemoryException) {
-                this.save = null;
-                this.clubGrid.Rows.Clear();
-                this.playerGrid.Rows.Clear();
+                CloseCurrentSave();
                 GC.Collect();
-                this.status.Text = "Not enough memory to load this save - close the Save Editor, " +
-                    "reopen it and load this save directly.";
+                this.status.Text = "Not enough memory - restart the Starter Kit app and try again.";
             } catch (Exception exception) {
-                this.save = null;
-                this.clubGrid.Rows.Clear();
-                this.playerGrid.Rows.Clear();
+                CloseCurrentSave();
                 this.status.Text = exception.Message;
             } finally {
                 Cursor = Cursors.Default;
