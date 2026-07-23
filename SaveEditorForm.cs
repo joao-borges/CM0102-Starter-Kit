@@ -30,6 +30,7 @@ namespace CM0102_Starter_Kit {
         // players tab
         TextBox playerSearch;
         ComboBox playerClubFilter, playerNationFilter;
+        ComboBox batchAttribute;
         DataGridView playerGrid;
         // staff tab
         TextBox staffSearch;
@@ -182,7 +183,7 @@ namespace CM0102_Starter_Kit {
         }
 
         void BuildPlayersPage(TabPage page) {
-            Panel filterBar = new Panel { Dock = DockStyle.Top, Height = 34 };
+            Panel filterBar = new Panel { Dock = DockStyle.Top, Height = 64 };
             Label searchLabel = new Label { Text = "Name:", AutoSize = true, Location = new Point(4, 8) };
             this.playerSearch = new TextBox { Location = new Point(52, 5), Width = 180 };
             this.playerSearch.TextChanged += (s, e) => RefreshPlayerList();
@@ -192,8 +193,20 @@ namespace CM0102_Starter_Kit {
             Label nationLabel = new Label { Text = "Nation:", AutoSize = true, Location = new Point(490, 8) };
             this.playerNationFilter = MakeFilterCombo(542, 150);
             this.playerNationFilter.TextChanged += (s, e) => RefreshPlayerList();
+
+            Label batchLabel = new Label { Text = "Batch:", AutoSize = true, Location = new Point(4, 38) };
+            this.batchAttribute = new ComboBox {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Location = new Point(52, 34), Width = 220
+            };
+            this.batchAttribute.Items.AddRange(BatchItemLabels());
+            this.batchAttribute.SelectedIndex = 0;
+            Button batchButton = new Button { Text = "Apply to filtered...", Location = new Point(282, 33), Size = new Size(130, 25) };
+            batchButton.Click += (s, e) => BatchEditPlayers();
+
             filterBar.Controls.AddRange(new Control[] {
-                searchLabel, this.playerSearch, clubLabel, this.playerClubFilter, nationLabel, this.playerNationFilter
+                searchLabel, this.playerSearch, clubLabel, this.playerClubFilter, nationLabel, this.playerNationFilter,
+                batchLabel, this.batchAttribute, batchButton
             });
 
             Label hint = new Label {
@@ -396,6 +409,23 @@ namespace CM0102_Starter_Kit {
             this.selectedClub = null;
         }
 
+        /// <summary>All players matching the current filter boxes, uncapped. With
+        /// every filter empty this is the whole player table.</summary>
+        List<SaveGame.PlayerRef> FilteredPlayers() {
+            List<SaveGame.PlayerRef> matches = new List<SaveGame.PlayerRef>();
+            if (this.save == null) return matches;
+            string name = this.playerSearch.Text.Trim().ToLower();
+            string club = this.playerClubFilter.Text.Trim().ToLower();
+            string nation = this.playerNationFilter.Text.Trim().ToLower();
+            foreach (SaveGame.PlayerRef player in this.save.Players) {
+                if (name.Length > 0 && !player.Name.ToLower().Contains(name)) continue;
+                if (club.Length > 0 && !player.ClubName.ToLower().Contains(club)) continue;
+                if (nation.Length > 0 && !player.Nation.ToLower().Contains(nation)) continue;
+                matches.Add(player);
+            }
+            return matches;
+        }
+
         void RefreshPlayerList() {
             List<DataGridViewRow> rows = new List<DataGridViewRow>();
             if (this.save != null && this.save.Players.Count > 0) {
@@ -403,10 +433,7 @@ namespace CM0102_Starter_Kit {
                 string club = this.playerClubFilter.Text.Trim().ToLower();
                 string nation = this.playerNationFilter.Text.Trim().ToLower();
                 if (name.Length >= 3 || club.Length >= 3 || nation.Length >= 2) {
-                    foreach (SaveGame.PlayerRef player in this.save.Players) {
-                        if (name.Length > 0 && !player.Name.ToLower().Contains(name)) continue;
-                        if (club.Length > 0 && !player.ClubName.ToLower().Contains(club)) continue;
-                        if (nation.Length > 0 && !player.Nation.ToLower().Contains(nation)) continue;
+                    foreach (SaveGame.PlayerRef player in FilteredPlayers()) {
                         rows.Add(MakeRow(this.playerGrid, player,
                             player.Name, player.Position, (long) player.Age,
                             player.ClubName, player.Nation,
@@ -440,6 +467,174 @@ namespace CM0102_Starter_Kit {
                 }
             }
             ReplaceRowsKeepingSort(this.staffGrid, rows);
+        }
+
+        // ---------------- batch edit (players tab) ----------------
+        // Item indexes: 0 condition%, 1 fitness%, 2 heal injuries (no value),
+        // 3 morale, 4 CA, 5 PA, then the 42 playing attributes.
+        const int BatchAttrOffset = 6;
+
+        static string[] BatchItemLabels() {
+            List<string> labels = new List<string> {
+                "Condition (%)", "Fitness (%)", "Heal injuries (100% cond/fit)",
+                "Morale (0-20)", "Current Ability (1-200)", "Potential Ability (1-200)"
+            };
+            labels.AddRange(PlayerEditForm.AttrLabels);
+            return labels.ToArray();
+        }
+
+        static void BatchItemRange(int item, out int min, out int max) {
+            switch (item) {
+                case 0: case 1: min = 0; max = 100; break;
+                case 3: min = 0; max = 20; break;
+                case 4: case 5: min = 1; max = 200; break;
+                default: min = 1; max = 20; break;
+            }
+        }
+
+        int BatchItemInitialValue(int item, SaveGame.PlayerRef first) {
+            switch (item) {
+                case 0: case 1: return 100;
+                case 3: return Math.Min(Math.Max((int) this.save.ReadByte(first.PlayerBase + 69), 0), 20);
+                case 4: return Math.Min(Math.Max((int) this.save.ReadInt16(first.PlayerBase + 5), 1), 200);
+                case 5: return Math.Min(Math.Max((int) this.save.ReadInt16(first.PlayerBase + 7), 1), 200);
+                default: {
+                    int attr = item - BatchAttrOffset;
+                    short ability = this.save.ReadInt16(first.PlayerBase + 5);
+                    bool goalkeeper = this.save.ReadSByte(first.PlayerBase + 15) >= 15;
+                    sbyte stored = this.save.ReadSByte(first.PlayerBase + 27 + attr);
+                    return Math.Min(Math.Max(
+                        PlayerEditForm.ToDisplay(PlayerEditForm.AttrKinds[attr], stored, ability, goalkeeper), 1), 20);
+                }
+            }
+        }
+
+        /// <summary>Stages the batch write for every target; returns how many players
+        /// were actually touched (condition/fitness/heal skip players without an
+        /// injury-table record). Does NOT save.</summary>
+        int ApplyPlayerBatch(int item, int value, List<SaveGame.PlayerRef> targets) {
+            int affected = 0;
+            foreach (SaveGame.PlayerRef player in targets) {
+                switch (item) {
+                    case 0:
+                        if (player.FitnessBase < 0) continue;
+                        this.save.WriteInt16(player.FitnessBase + 10, (short) (value * 100));
+                        break;
+                    case 1:
+                        if (player.FitnessBase < 0) continue;
+                        this.save.WriteInt16(player.FitnessBase + 8, (short) (value * 100));
+                        break;
+                    case 2:
+                        if (player.FitnessBase < 0) continue;
+                        this.save.WriteInt16(player.FitnessBase + 8, 10000);
+                        this.save.WriteInt16(player.FitnessBase + 10, 10000);
+                        this.save.WriteByte(player.FitnessBase + 18, 0xff);
+                        this.save.WriteByte(player.FitnessBase + 19, 0);
+                        break;
+                    case 3:
+                        this.save.WriteByte(player.PlayerBase + 69, (byte) value);
+                        break;
+                    case 4: {
+                        this.save.WriteInt16(player.PlayerBase + 5, (short) value);
+                        short potential = this.save.ReadInt16(player.PlayerBase + 7);
+                        if (potential < value) {
+                            this.save.WriteInt16(player.PlayerBase + 7, (short) value);
+                        }
+                        break;
+                    }
+                    case 5: {
+                        short ability = this.save.ReadInt16(player.PlayerBase + 5);
+                        this.save.WriteInt16(player.PlayerBase + 7, (short) Math.Max(value, (int) ability));
+                        break;
+                    }
+                    default: {
+                        // re-encoded per player against their own CA/GK status
+                        int attr = item - BatchAttrOffset;
+                        short ability = this.save.ReadInt16(player.PlayerBase + 5);
+                        bool goalkeeper = this.save.ReadSByte(player.PlayerBase + 15) >= 15;
+                        this.save.WriteSByte(player.PlayerBase + 27 + attr,
+                            PlayerEditForm.FromDisplay(PlayerEditForm.AttrKinds[attr], value, ability, goalkeeper));
+                        break;
+                    }
+                }
+                affected++;
+            }
+            return affected;
+        }
+
+        void BatchEditPlayers() {
+            if (this.save == null) return;
+            EnsurePlayersLoaded();
+            if (this.save.Players.Count == 0) return;
+            int item = this.batchAttribute.SelectedIndex;
+            if (item < 0) return;
+            List<SaveGame.PlayerRef> targets = FilteredPlayers();
+            if (targets.Count == 0) {
+                this.status.Text = "No players match the current filter.";
+                return;
+            }
+            string label = this.batchAttribute.Text;
+            bool needsValue = item != 2;
+            bool unfiltered = this.playerSearch.Text.Trim().Length == 0 &&
+                this.playerClubFilter.Text.Trim().Length == 0 &&
+                this.playerNationFilter.Text.Trim().Length == 0;
+            string scope = targets.Count.ToString("N0") + (unfiltered ? " players (NO filter - the whole save!)" : " filtered players");
+            int min, max;
+            BatchItemRange(item, out min, out max);
+            int value;
+            using (BatchDialog dialog = new BatchDialog(
+                (needsValue ? "Set \"" + label + "\" for " : "Heal injuries and restore condition/fitness for ") + scope + ".",
+                needsValue, min, max, needsValue ? BatchItemInitialValue(item, targets[0]) : 0)) {
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                value = dialog.Value;
+            }
+            if (BlockedByRunningGame()) {
+                this.status.Text = "Batch NOT saved - game running. Retry after exiting the game.";
+                return;
+            }
+            try {
+                int affected = ApplyPlayerBatch(item, value, targets);
+                string backup = this.save.Save();
+                this.status.Text = label + " applied to " + affected.ToString("N0") +
+                    " players. Backup: " + Path.GetFileName(backup);
+                RefreshPlayerList();
+            } catch (Exception exception) {
+                this.status.Text = exception.Message;
+            }
+        }
+
+        /// <summary>Tiny confirm popup for batch edits: message, optional value
+        /// spinner, OK/Cancel.</summary>
+        class BatchDialog : Form {
+            readonly NumericUpDown numeric;
+
+            public int Value { get { return this.numeric != null ? (int) this.numeric.Value : 0; } }
+
+            public BatchDialog(string message, bool needsValue, int min, int max, int initial) {
+                this.Text = "Batch edit";
+                this.FormBorderStyle = FormBorderStyle.FixedDialog;
+                this.MaximizeBox = false;
+                this.MinimizeBox = false;
+                this.StartPosition = FormStartPosition.CenterParent;
+                this.ClientSize = new Size(380, 130);
+                Label text = new Label { Text = message, Location = new Point(12, 10), Size = new Size(356, 48) };
+                this.Controls.Add(text);
+                if (needsValue) {
+                    this.Controls.Add(new Label { Text = "Value:", AutoSize = true, Location = new Point(12, 66) });
+                    this.numeric = new NumericUpDown {
+                        Minimum = min, Maximum = max,
+                        Value = Math.Min(Math.Max(initial, min), max),
+                        Location = new Point(60, 62), Width = 70
+                    };
+                    this.Controls.Add(this.numeric);
+                }
+                Button ok = new Button { Text = "Apply", DialogResult = DialogResult.OK, Location = new Point(180, 94), Size = new Size(90, 28) };
+                Button cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Location = new Point(278, 94), Size = new Size(90, 28) };
+                this.Controls.Add(ok);
+                this.Controls.Add(cancel);
+                this.AcceptButton = ok;
+                this.CancelButton = cancel;
+            }
         }
 
         void EditSelectedStaff() {

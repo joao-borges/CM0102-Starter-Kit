@@ -19,7 +19,7 @@ namespace CM0102_Starter_Kit {
     /// live in Preferences.dat.
     /// </summary>
     class PlayerEditForm : Form {
-        enum Kind { Raw, High, Gk, Outfield }
+        internal enum Kind { Raw, High, Gk, Outfield }
 
         class Attr {
             public string Label;
@@ -90,28 +90,30 @@ namespace CM0102_Starter_Kit {
             ReadValues();
         }
 
+        // record order; offsets are +27..+68 in the player record. Shared with the
+        // Save Editor's batch edit.
+        internal static readonly string[] AttrLabels = {
+            "Acceleration", "Aggression", "Agility", "Anticipation", "Balance", "Bravery",
+            "Consistency", "Corners", "Crossing", "Decisions", "Dirtiness", "Dribbling",
+            "Finishing", "Flair", "Free Kicks", "Handling", "Heading", "Imp. Matches",
+            "Injury Prone", "Jumping", "Leadership", "Left Foot", "Long Shots", "Marking",
+            "Movement", "Fitness", "One on Ones", "Pace", "Passing", "Penalties",
+            "Positioning", "Reflexes", "Right Foot", "Stamina", "Strength", "Tackling",
+            "Teamwork", "Technique", "Throw-ins", "Versatility", "Vision", "Work Rate"
+        };
+        internal static readonly Kind[] AttrKinds = {
+            Kind.Raw, Kind.Raw, Kind.Raw, Kind.High, Kind.Raw, Kind.Raw,
+            Kind.Raw, Kind.Raw, Kind.Outfield, Kind.High, Kind.Raw, Kind.Outfield,
+            Kind.Outfield, Kind.Raw, Kind.Raw, Kind.Gk, Kind.High, Kind.Raw,
+            Kind.Raw, Kind.Raw, Kind.Raw, Kind.Raw, Kind.High, Kind.Outfield,
+            Kind.Outfield, Kind.Raw, Kind.Gk, Kind.Raw, Kind.High, Kind.High,
+            Kind.High, Kind.Gk, Kind.Raw, Kind.Raw, Kind.Raw, Kind.High,
+            Kind.Raw, Kind.Raw, Kind.Outfield, Kind.Raw, Kind.Outfield, Kind.Raw
+        };
+
         void DefineAttributes() {
-            // record order; offsets are +27..+68 in the player record
-            string[] labels = {
-                "Acceleration", "Aggression", "Agility", "Anticipation", "Balance", "Bravery",
-                "Consistency", "Corners", "Crossing", "Decisions", "Dirtiness", "Dribbling",
-                "Finishing", "Flair", "Free Kicks", "Handling", "Heading", "Imp. Matches",
-                "Injury Prone", "Jumping", "Leadership", "Left Foot", "Long Shots", "Marking",
-                "Movement", "Fitness", "One on Ones", "Pace", "Passing", "Penalties",
-                "Positioning", "Reflexes", "Right Foot", "Stamina", "Strength", "Tackling",
-                "Teamwork", "Technique", "Throw-ins", "Versatility", "Vision", "Work Rate"
-            };
-            Kind[] kinds = {
-                Kind.Raw, Kind.Raw, Kind.Raw, Kind.High, Kind.Raw, Kind.Raw,
-                Kind.Raw, Kind.Raw, Kind.Outfield, Kind.High, Kind.Raw, Kind.Outfield,
-                Kind.Outfield, Kind.Raw, Kind.Raw, Kind.Gk, Kind.High, Kind.Raw,
-                Kind.Raw, Kind.Raw, Kind.Raw, Kind.Raw, Kind.High, Kind.Outfield,
-                Kind.Outfield, Kind.Raw, Kind.Gk, Kind.Raw, Kind.High, Kind.High,
-                Kind.High, Kind.Gk, Kind.Raw, Kind.Raw, Kind.Raw, Kind.High,
-                Kind.Raw, Kind.Raw, Kind.Outfield, Kind.Raw, Kind.Outfield, Kind.Raw
-            };
-            for (int i = 0; i < labels.Length; i++) {
-                this.attributes.Add(new Attr(labels[i], 27 + i, kinds[i]));
+            for (int i = 0; i < AttrLabels.Length; i++) {
+                this.attributes.Add(new Attr(AttrLabels[i], 27 + i, AttrKinds[i]));
             }
         }
 
@@ -592,14 +594,14 @@ namespace CM0102_Starter_Kit {
             return result < 1 ? 1 : (int) result;
         }
 
-        static int ToDisplay(Kind kind, sbyte stored, short ability, bool goalkeeper) {
+        internal static int ToDisplay(Kind kind, sbyte stored, short ability, bool goalkeeper) {
             if (kind == Kind.Raw) {
                 return stored;
             }
             return Forward(stored, ability, UsesHighBranch(kind, goalkeeper));
         }
 
-        static sbyte FromDisplay(Kind kind, int shown, short ability, bool goalkeeper) {
+        internal static sbyte FromDisplay(Kind kind, int shown, short ability, bool goalkeeper) {
             if (kind == Kind.Raw) {
                 return (sbyte) shown;
             }
