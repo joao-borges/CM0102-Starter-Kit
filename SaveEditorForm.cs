@@ -242,11 +242,12 @@ namespace CM0102_Starter_Kit {
             };
 
             this.staffGrid = MakeGrid();
-            AddGridColumn(this.staffGrid, "Name", 200, false);
+            AddGridColumn(this.staffGrid, "Name", 180, false);
+            AddGridColumn(this.staffGrid, "Job", 120, false);
             AddGridColumn(this.staffGrid, "Age", 45, true);
-            AddGridColumn(this.staffGrid, "Club", 200, false);
-            AddGridColumn(this.staffGrid, "Nation", 130, false);
-            AddGridColumn(this.staffGrid, "Value", 100, true);
+            AddGridColumn(this.staffGrid, "Club", 180, false);
+            AddGridColumn(this.staffGrid, "Nation", 120, false);
+            AddGridColumn(this.staffGrid, "Value", 95, true);
             this.staffGrid.CellDoubleClick += (s, e) => {
                 if (e.RowIndex >= 0) EditSelectedStaff();
             };
@@ -431,7 +432,8 @@ namespace CM0102_Starter_Kit {
                         if (club.Length > 0 && !person.ClubName.ToLower().Contains(club)) continue;
                         if (nation.Length > 0 && !person.Nation.ToLower().Contains(nation)) continue;
                         rows.Add(MakeRow(this.staffGrid, person,
-                            person.Name, (long) person.Age, person.ClubName, person.Nation,
+                            person.Name, person.Position, (long) person.Age,
+                            person.ClubName, person.Nation,
                             (long) this.save.ReadInt32(person.StaffBase + 82)));
                         if (rows.Count >= 400) break;
                     }

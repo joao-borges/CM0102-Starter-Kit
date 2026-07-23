@@ -231,7 +231,8 @@ namespace CM0102_Starter_Kit {
 
         public IList<PlayerRef> Players { get { return this.players; } }
         /// <summary>Non-player staff (managers, coaches, retired players...); the same
-        /// record shape as Players but with PlayerBase = -1 and no Position.</summary>
+        /// record shape as Players but with PlayerBase = -1 and the job title
+        /// (Manager, Coach, Scout...) in Position.</summary>
         public IList<PlayerRef> StaffMembers { get { return this.staffMembers; } }
         public IList<Nation> Nations { get { return this.nations; } }
         public IList<StaffEntry> StaffDirectory { get { return this.staffDirectory; } }
@@ -292,6 +293,21 @@ namespace CM0102_Starter_Kit {
                 }
             }
             return result;
+        }
+
+        // staff +61 JobForClub / +40 JobForNation bytes; titles from the StaffJob
+        // enum in CM0102Patcher SaveChanger/Structures.cs
+        static readonly string[] JobNames = {
+            "-", "Chairman", "Managing Director", "General Manager", "Director of Football",
+            "Manager", "Assistant Manager", "Reserve Team Manager", "Coach", "Scout",
+            "Physio", "Player", "Player-Manager", "Player-Assistant Manager",
+            "Player-Reserve Team Manager", "Player-Coach", "Retired Player", "Media Pundit"
+        };
+
+        static string JobName(byte clubJob, byte nationJob) {
+            if (clubJob > 0 && clubJob < JobNames.Length) return JobNames[clubJob];
+            if (nationJob > 0 && nationJob < JobNames.Length) return JobNames[nationJob] + " (nat)";
+            return "-";
         }
 
         public void LoadPlayers() {
@@ -414,7 +430,8 @@ namespace CM0102_Starter_Kit {
                     Name = name,
                     ClubName = clubName,
                     Nation = nationNames.TryGetValue(nationId, out nationName) ? nationName : "-",
-                    Position = isPlayer ? PositionString(playerBuffer, playerRecordBase) : "",
+                    Position = isPlayer ? PositionString(playerBuffer, playerRecordBase)
+                        : JobName(staffBuffer[staffBase + 61], staffBuffer[staffBase + 40]),
                     // birthday-aware, like the game shows it
                     Age = birthYear > 1800
                         ? this.gameYear - birthYear - (this.gameDay < birthDay ? 1 : 0) : 0

@@ -60,6 +60,7 @@ namespace CM0102_Starter_Kit {
         readonly int[] prefStaffIds = new int[6];
         // original values for lossy fields, so an untouched dialog writes nothing back
         int originalConditionPct, originalFitnessPct, originalHomeRep, originalCurrentRep, originalWorldRep;
+        CoachingPanel coachingPanel;    // player-managers only (nonplayer.dat record)
         readonly Dictionary<int, string> clubIdToName = new Dictionary<int, string>();
         readonly Dictionary<string, int> clubNameToId = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
         readonly Dictionary<string, int> nationNameToId = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
@@ -129,6 +130,13 @@ namespace CM0102_Starter_Kit {
             BuildAttributesPage(attributesPage);
             BuildPersonalPage(personalPage);
             BuildPrefsPage(prefsPage);
+            if (this.player.NonPlayerBase >= 0) {
+                // player-managers also carry a coaching record
+                TabPage coachingPage = new TabPage("Coaching");
+                tabs.TabPages.Add(coachingPage);
+                this.coachingPanel = new CoachingPanel(this.save, this.player.NonPlayerBase);
+                this.coachingPanel.BuildInto(coachingPage);
+            }
 
             Button ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(700, 615), Size = new Size(90, 30) };
             ok.Click += (s, e) => WriteValues();
@@ -413,6 +421,10 @@ namespace CM0102_Starter_Kit {
                     this.prefStaffBoxes[i].Text = StaffDisplayName(this.prefStaffIds[i]);
                 }
             }
+
+            if (this.coachingPanel != null) {
+                this.coachingPanel.ReadValues();
+            }
         }
 
         void SelectNation(ComboBox combo, int nationId, bool allowNone) {
@@ -521,6 +533,10 @@ namespace CM0102_Starter_Kit {
                     }
                     this.save.WriteInt32(this.player.PrefsBase + 28 + i * 4, this.prefStaffIds[i]);
                 }
+            }
+
+            if (this.coachingPanel != null) {
+                this.coachingPanel.WriteValues();
             }
         }
 

@@ -8,27 +8,15 @@ namespace CM0102_Starter_Kit {
     /// Editor dialog for non-player staff (managers, coaches, scouts, retired
     /// players...). Edits the staff.dat personal fields (birth date, nationalities,
     /// caps/goals, value, mentals), the contract wage, the nonplayer.dat coaching
-    /// record (CA/PA, reputations, 21 coaching attributes stored as CA-weighted
-    /// intrinsics - same "high branch" maths as player attributes) and the
-    /// Preferences.dat likes/dislikes. Manager wages are NOT in contract.dat and
-    /// have no known on-disk home (man_conf.dat is board-confidence data), so the
-    /// wage field stays disabled for staff without a contract record.
-    /// Coaching attributes display clamped to 1-20 (the true value of an elite
-    /// manager can exceed 20), so only attributes the user actually changed are
-    /// written back.
+    /// record (via the shared CoachingPanel) and the Preferences.dat
+    /// likes/dislikes. Manager wages are NOT in contract.dat and have no known
+    /// on-disk home (man_conf.dat is board-confidence data), so the wage field
+    /// stays disabled for staff without a contract record.
     /// </summary>
     class StaffEditForm : Form {
         static readonly string[] MentalNames = {
             "Adaptability", "Ambition", "Determination", "Loyalty",
             "Pressure", "Professionalism", "Sportsmanship", "Temperament"
-        };
-
-        // nonplayer.dat record +14..+34, alphabetical storage order
-        static readonly string[] CoachingNames = {
-            "Attacking", "Business", "Coaching", "Coaching GKs", "Coaching Tech.",
-            "Directness", "Discipline", "Free Roles", "Interference", "Judging Ability",
-            "Judging Potential", "Man Handling", "Marking", "Motivating", "Offside",
-            "Patience", "Physiotherapy", "Pressing", "Resources", "Tactics", "Youngsters"
         };
 
         readonly SaveGame save;
@@ -38,11 +26,7 @@ namespace CM0102_Starter_Kit {
         Label ageLabel;
         int originalDobDay, originalDobMonth, originalDobYear;
         readonly NumericUpDown[] mentals = new NumericUpDown[8];
-        // Coaching tab (nonplayer.dat); all null when the person has no record
-        NumericUpDown ability, potential, homeRep, currentRep, worldRep;
-        readonly NumericUpDown[] coaching = new NumericUpDown[21];
-        int originalAbility, originalPotential, originalHomeRep, originalCurrentRep, originalWorldRep;
-        readonly int[] originalCoaching = new int[21];
+        CoachingPanel coachingPanel;    // null when the person has no nonplayer record
         readonly ComboBox[] prefClubs = new ComboBox[6];
         readonly TextBox[] prefStaffBoxes = new TextBox[6];
         readonly int[] prefStaffIds = new int[6];
@@ -180,39 +164,8 @@ namespace CM0102_Starter_Kit {
                 });
                 return;
             }
-            GroupBox general = new GroupBox { Text = "General (0-200 scales)", Location = new Point(8, 8), Size = new Size(856, 80) };
-            this.ability = MakeNumeric(1, 200);
-            this.potential = MakeNumeric(1, 200);
-            this.currentRep = MakeNumeric(0, 200);
-            this.homeRep = MakeNumeric(0, 200);
-            this.worldRep = MakeNumeric(0, 200);
-            object[][] generalFields = {
-                new object[] { "Current Ability", this.ability }, new object[] { "Potential Ability", this.potential },
-                new object[] { "Cur. Reputation", this.currentRep }, new object[] { "Home Rep.", this.homeRep },
-                new object[] { "World Rep.", this.worldRep }
-            };
-            int x = 12;
-            foreach (object[] field in generalFields) {
-                Control control = (Control) field[1];
-                general.Controls.Add(new Label { Text = (string) field[0], Location = new Point(x, 22), AutoSize = true });
-                control.Location = new Point(x, 42);
-                general.Controls.Add(control);
-                x += control.Width + 60;
-            }
-
-            GroupBox attributesBox = new GroupBox {
-                Text = "Coaching attributes (as shown in game, 1-20; elite values above 20 show as 20)",
-                Location = new Point(8, 96), Size = new Size(856, 210)
-            };
-            for (int i = 0; i < 21; i++) {
-                int column = i % 6, row = i / 6;
-                attributesBox.Controls.Add(new Label { Text = CoachingNames[i], Location = new Point(12 + column * 141, 24 + row * 42), AutoSize = true });
-                this.coaching[i] = MakeNumeric(1, 20);
-                this.coaching[i].Location = new Point(15 + column * 141, 40 + row * 42);
-                attributesBox.Controls.Add(this.coaching[i]);
-            }
-
-            page.Controls.AddRange(new Control[] { general, attributesBox });
+            this.coachingPanel = new CoachingPanel(this.save, this.person.NonPlayerBase);
+            this.coachingPanel.BuildInto(page);
         }
 
         void BuildPrefsPage(TabPage page) {
@@ -312,26 +265,8 @@ namespace CM0102_Starter_Kit {
             }
             RefreshAgeLabel();
 
-            if (this.person.NonPlayerBase >= 0) {
-                int recordBase = this.person.NonPlayerBase;
-                short ability16 = this.save.ReadInt16(recordBase + 4);
-                this.originalAbility = Math.Min(Math.Max((int) ability16, 1), 200);
-                this.originalPotential = Math.Min(Math.Max((int) this.save.ReadInt16(recordBase + 6), 1), 200);
-                // reputations stored x50 of the 0-200 scale, like players
-                this.originalHomeRep = Math.Min(Math.Max((int) Math.Round(this.save.ReadInt16(recordBase + 8) / 50.0), 0), 200);
-                this.originalCurrentRep = Math.Min(Math.Max((int) Math.Round(this.save.ReadInt16(recordBase + 10) / 50.0), 0), 200);
-                this.originalWorldRep = Math.Min(Math.Max((int) Math.Round(this.save.ReadInt16(recordBase + 12) / 50.0), 0), 200);
-                this.ability.Value = this.originalAbility;
-                this.potential.Value = this.originalPotential;
-                this.homeRep.Value = this.originalHomeRep;
-                this.currentRep.Value = this.originalCurrentRep;
-                this.worldRep.Value = this.originalWorldRep;
-                for (int i = 0; i < 21; i++) {
-                    sbyte stored = this.save.ReadSByte(recordBase + 14 + i);
-                    this.originalCoaching[i] = Math.Min(Math.Max(
-                        PlayerEditForm.ShownFromIntrinsicHigh(stored, ability16), 1), 20);
-                    this.coaching[i].Value = this.originalCoaching[i];
-                }
+            if (this.coachingPanel != null) {
+                this.coachingPanel.ReadValues();
             }
 
             if (this.person.PrefsBase >= 0) {
@@ -419,34 +354,8 @@ namespace CM0102_Starter_Kit {
                 this.person.Age = CurrentAge(dayOfYear, year);
             }
 
-            if (this.person.NonPlayerBase >= 0) {
-                int recordBase = this.person.NonPlayerBase;
-                if ((int) this.ability.Value != this.originalAbility) {
-                    this.save.WriteInt16(recordBase + 4, (short) this.ability.Value);
-                }
-                if ((int) this.potential.Value != this.originalPotential ||
-                    (int) this.ability.Value > this.originalPotential) {
-                    this.save.WriteInt16(recordBase + 6,
-                        (short) Math.Max(this.potential.Value, this.ability.Value));
-                }
-                if ((int) this.homeRep.Value != this.originalHomeRep) {
-                    this.save.WriteInt16(recordBase + 8, (short) (this.homeRep.Value * 50));
-                }
-                if ((int) this.currentRep.Value != this.originalCurrentRep) {
-                    this.save.WriteInt16(recordBase + 10, (short) (this.currentRep.Value * 50));
-                }
-                if ((int) this.worldRep.Value != this.originalWorldRep) {
-                    this.save.WriteInt16(recordBase + 12, (short) (this.worldRep.Value * 50));
-                }
-                // the 1-20 display is lossy (clamped at 20, truncated maths), so only
-                // attributes the user touched are re-encoded against the dialog CA
-                short newAbility16 = (short) this.ability.Value;
-                for (int i = 0; i < 21; i++) {
-                    if ((int) this.coaching[i].Value != this.originalCoaching[i]) {
-                        this.save.WriteSByte(recordBase + 14 + i,
-                            PlayerEditForm.IntrinsicFromShownHigh((int) this.coaching[i].Value, newAbility16));
-                    }
-                }
+            if (this.coachingPanel != null) {
+                this.coachingPanel.WriteValues();
             }
 
             if (this.person.PrefsBase >= 0) {
