@@ -29,9 +29,12 @@ namespace CM0102_Starter_Kit {
         SaveGame.Club selectedClub;
         // players tab
         TextBox playerSearch;
-        ComboBox playerClubFilter, playerNationFilter;
+        ComboBox playerClubFilter, playerNationFilter, playerNatTeamFilter;
         ComboBox batchAttribute;
         DataGridView playerGrid;
+        // nations tab
+        TextBox nationSearch;
+        DataGridView nationGrid;
         // staff tab
         TextBox staffSearch;
         ComboBox staffClubFilter, staffNationFilter;
@@ -68,16 +71,20 @@ namespace CM0102_Starter_Kit {
             TabPage clubsPage = new TabPage("Clubs") { Padding = new Padding(6) };
             TabPage playersPage = new TabPage("Players") { Padding = new Padding(6) };
             TabPage staffPage = new TabPage("Staff") { Padding = new Padding(6) };
+            TabPage nationsPage = new TabPage("Nations") { Padding = new Padding(6) };
             tabs.TabPages.Add(clubsPage);
             tabs.TabPages.Add(playersPage);
             tabs.TabPages.Add(staffPage);
+            tabs.TabPages.Add(nationsPage);
             tabs.SelectedIndexChanged += (s, e) => {
-                if (tabs.SelectedTab == playersPage || tabs.SelectedTab == staffPage) EnsurePlayersLoaded();
+                if (tabs.SelectedTab == playersPage || tabs.SelectedTab == staffPage ||
+                    tabs.SelectedTab == nationsPage) EnsurePlayersLoaded();
             };
 
             BuildClubsPage(clubsPage);
             BuildPlayersPage(playersPage);
             BuildStaffPage(staffPage);
+            BuildNationsPage(nationsPage);
 
             // dock layout processes the collection back to front: add the filling
             // control first so the edge-docked bars claim their space before it
@@ -213,9 +220,14 @@ namespace CM0102_Starter_Kit {
             Button batchButton = new Button { Text = "Apply to filtered...", Location = new Point(282, 33), Size = new Size(130, 25) };
             batchButton.Click += (s, e) => BatchEditPlayers();
 
+            Label natTeamLabel = new Label { Text = "Nat. squad:", AutoSize = true, Location = new Point(430, 38) };
+            this.playerNatTeamFilter = MakeFilterCombo(508, 150);
+            this.playerNatTeamFilter.Top = 34;
+            this.playerNatTeamFilter.TextChanged += (s, e) => RefreshPlayerList();
+
             filterBar.Controls.AddRange(new Control[] {
                 searchLabel, this.playerSearch, clubLabel, this.playerClubFilter, nationLabel, this.playerNationFilter,
-                batchLabel, this.batchAttribute, batchButton
+                batchLabel, this.batchAttribute, batchButton, natTeamLabel, this.playerNatTeamFilter
             });
 
             Label hint = new Label {
@@ -279,6 +291,114 @@ namespace CM0102_Starter_Kit {
             page.Controls.Add(filterBar);
         }
 
+        void BuildNationsPage(TabPage page) {
+            Panel filterBar = new Panel { Dock = DockStyle.Top, Height = 34 };
+            Label searchLabel = new Label { Text = "Name:", AutoSize = true, Location = new Point(4, 8) };
+            this.nationSearch = new TextBox { Location = new Point(52, 5), Width = 180 };
+            this.nationSearch.TextChanged += (s, e) => RefreshNationList();
+            filterBar.Controls.AddRange(new Control[] { searchLabel, this.nationSearch });
+
+            Label hint = new Label {
+                Text = "Double-click a nation to edit its reputation, league standard and FIFA coefficient.",
+                Dock = DockStyle.Bottom, Height = 22, ForeColor = Color.DimGray,
+                Padding = new Padding(4, 6, 0, 0)
+            };
+
+            this.nationGrid = MakeGrid();
+            AddGridColumn(this.nationGrid, "Nation", 220, false);
+            AddGridColumn(this.nationGrid, "Reputation", 90, true);
+            AddGridColumn(this.nationGrid, "League Std", 90, true);
+            AddGridColumn(this.nationGrid, "FIFA Coeff", 90, true);
+            this.nationGrid.CellDoubleClick += (s, e) => {
+                if (e.RowIndex >= 0) EditSelectedNation();
+            };
+
+            page.Controls.Add(this.nationGrid);
+            page.Controls.Add(hint);
+            page.Controls.Add(filterBar);
+        }
+
+        void RefreshNationList() {
+            List<DataGridViewRow> rows = new List<DataGridViewRow>();
+            if (this.save != null) {
+                string needle = this.nationSearch.Text.Trim().ToLower();
+                foreach (SaveGame.Nation nation in this.save.Nations) {
+                    if (needle.Length > 0 && !nation.Name.ToLower().Contains(needle)) continue;
+                    rows.Add(MakeRow(this.nationGrid, nation, nation.Name,
+                        (long) Math.Round(this.save.ReadInt16(nation.RecordBase + 142) / 50.0),
+                        (long) this.save.ReadSByte(nation.RecordBase + 133),
+                        (long) Math.Round(this.save.ReadDouble(nation.RecordBase + 168))));
+                }
+            }
+            ReplaceRowsKeepingSort(this.nationGrid, rows);
+        }
+
+        void EditSelectedNation() {
+            if (this.save == null || this.nationGrid.SelectedRows.Count == 0) return;
+            SaveGame.Nation nation = this.nationGrid.SelectedRows[0].Tag as SaveGame.Nation;
+            if (nation == null) return;
+            using (NationEditDialog dialog = new NationEditDialog(this.save, nation)) {
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+            }
+            if (BlockedByRunningGame()) {
+                this.status.Text = "Edit NOT saved - game running. Reopen the editor after exiting the game.";
+                return;
+            }
+            try {
+                string backup = this.save.Save();
+                this.status.Text = nation.Name + " updated. Backup: " + Path.GetFileName(backup);
+                RefreshNationList();
+            } catch (Exception exception) {
+                this.status.Text = exception.Message;
+            }
+        }
+
+        /// <summary>Editor for the nation.dat fields with understood scales:
+        /// reputation (x50 of the shown 0-200), league standard (0-20) and the
+        /// current FIFA coefficient (double). Reputation is only written back when
+        /// changed - the /50 display rounds.</summary>
+        class NationEditDialog : Form {
+            public NationEditDialog(SaveGame save, SaveGame.Nation nation) {
+                this.Text = "Edit Nation - " + nation.Name;
+                this.FormBorderStyle = FormBorderStyle.FixedDialog;
+                this.MaximizeBox = false;
+                this.MinimizeBox = false;
+                this.StartPosition = FormStartPosition.CenterParent;
+                this.ClientSize = new Size(360, 160);
+
+                this.Controls.Add(new Label { Text = "Reputation (0-200)", AutoSize = true, Location = new Point(12, 16) });
+                NumericUpDown reputation = new NumericUpDown { Minimum = 0, Maximum = 200, Width = 70, Location = new Point(180, 12) };
+                int originalReputation = (int) Math.Min(Math.Max(
+                    Math.Round(save.ReadInt16(nation.RecordBase + 142) / 50.0), 0), 200);
+                reputation.Value = originalReputation;
+                this.Controls.Add(reputation);
+
+                this.Controls.Add(new Label { Text = "League standard (0-20)", AutoSize = true, Location = new Point(12, 52) });
+                NumericUpDown leagueStandard = new NumericUpDown { Minimum = 0, Maximum = 20, Width = 70, Location = new Point(180, 48) };
+                leagueStandard.Value = Math.Min(Math.Max((int) save.ReadSByte(nation.RecordBase + 133), 0), 20);
+                this.Controls.Add(leagueStandard);
+
+                this.Controls.Add(new Label { Text = "FIFA coefficient", AutoSize = true, Location = new Point(12, 88) });
+                NumericUpDown fifa = new NumericUpDown { Minimum = 0, Maximum = 3000, Width = 70, Location = new Point(180, 84) };
+                fifa.Value = (decimal) Math.Min(Math.Max(save.ReadDouble(nation.RecordBase + 168), 0), 3000);
+                this.Controls.Add(fifa);
+
+                Button ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(160, 122), Size = new Size(90, 28) };
+                ok.Click += (s, e) => {
+                    if ((int) reputation.Value != originalReputation) {
+                        save.WriteInt16(nation.RecordBase + 142, (short) (reputation.Value * 50));
+                    }
+                    save.WriteSByte(nation.RecordBase + 133, (sbyte) leagueStandard.Value);
+                    save.WriteDouble(nation.RecordBase + 168, (double) fifa.Value);
+                };
+                Button cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Location = new Point(258, 122), Size = new Size(90, 28) };
+                this.Controls.Add(ok);
+                this.Controls.Add(cancel);
+                this.AcceptButton = ok;
+                this.CancelButton = cancel;
+            }
+        }
+
         void RefreshSaveList() {
             this.saveSelector.Items.Clear();
             if (Directory.Exists(GameFolder)) {
@@ -327,9 +447,11 @@ namespace CM0102_Starter_Kit {
                 PopulateClubFilter();
                 SetFilterItems(this.playerNationFilter, new string[0]);
                 SetFilterItems(this.staffNationFilter, new string[0]);
+                SetFilterItems(this.playerNatTeamFilter, new string[0]);
                 RefreshClubList();
                 RefreshPlayerList();
                 RefreshStaffList();
+                RefreshNationList();
             } catch (OutOfMemoryException) {
                 CloseCurrentSave();
                 GC.Collect();
@@ -363,10 +485,18 @@ namespace CM0102_Starter_Kit {
                 }
                 SetFilterItems(this.playerNationFilter, nationNames.ToArray());
                 SetFilterItems(this.staffNationFilter, nationNames.ToArray());
+                SortedDictionary<string, bool> natTeams = new SortedDictionary<string, bool>(StringComparer.CurrentCultureIgnoreCase);
+                foreach (SaveGame.PlayerRef player in this.save.Players) {
+                    if (player.NationalTeam.Length > 0) natTeams[player.NationalTeam] = true;
+                }
+                string[] natTeamNames = new string[natTeams.Count];
+                natTeams.Keys.CopyTo(natTeamNames, 0);
+                SetFilterItems(this.playerNatTeamFilter, natTeamNames);
                 this.status.Text = this.save.Players.Count.ToString("N0") + " players and " +
                     this.save.StaffMembers.Count.ToString("N0") + " non-player staff indexed.";
                 RefreshPlayerList();
                 RefreshStaffList();
+                RefreshNationList();
             } catch (Exception exception) {
                 this.status.Text = exception.Message;
             } finally {
@@ -422,10 +552,12 @@ namespace CM0102_Starter_Kit {
             string name = this.playerSearch.Text.Trim().ToLower();
             string club = this.playerClubFilter.Text.Trim().ToLower();
             string nation = this.playerNationFilter.Text.Trim().ToLower();
+            string natTeam = this.playerNatTeamFilter.Text.Trim().ToLower();
             foreach (SaveGame.PlayerRef player in this.save.Players) {
                 if (name.Length > 0 && !player.Name.ToLower().Contains(name)) continue;
                 if (club.Length > 0 && !player.ClubName.ToLower().Contains(club)) continue;
                 if (nation.Length > 0 && !player.Nation.ToLower().Contains(nation)) continue;
+                if (natTeam.Length > 0 && !player.NationalTeam.ToLower().Contains(natTeam)) continue;
                 matches.Add(player);
             }
             return matches;
@@ -437,7 +569,8 @@ namespace CM0102_Starter_Kit {
                 string name = this.playerSearch.Text.Trim().ToLower();
                 string club = this.playerClubFilter.Text.Trim().ToLower();
                 string nation = this.playerNationFilter.Text.Trim().ToLower();
-                if (name.Length >= 3 || club.Length >= 3 || nation.Length >= 2) {
+                string natTeam = this.playerNatTeamFilter.Text.Trim().ToLower();
+                if (name.Length >= 3 || club.Length >= 3 || nation.Length >= 2 || natTeam.Length >= 2) {
                     foreach (SaveGame.PlayerRef player in FilteredPlayers()) {
                         rows.Add(MakeRow(this.playerGrid, player,
                             player.Name, player.Position, (long) player.Age,
@@ -582,7 +715,8 @@ namespace CM0102_Starter_Kit {
             bool needsValue = item != 2;
             bool unfiltered = this.playerSearch.Text.Trim().Length == 0 &&
                 this.playerClubFilter.Text.Trim().Length == 0 &&
-                this.playerNationFilter.Text.Trim().Length == 0;
+                this.playerNationFilter.Text.Trim().Length == 0 &&
+                this.playerNatTeamFilter.Text.Trim().Length == 0;
             string scope = targets.Count.ToString("N0") + (unfiltered ? " players (NO filter - the whole save!)" : " filtered players");
             int min, max;
             BatchItemRange(item, out min, out max);

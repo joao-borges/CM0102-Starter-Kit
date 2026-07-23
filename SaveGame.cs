@@ -93,10 +93,12 @@ namespace CM0102_Starter_Kit {
         public sbyte ReadSByte(int offset) { return (sbyte) ReadRaw(offset, 1)[0]; }
         public short ReadInt16(int offset) { return BitConverter.ToInt16(ReadRaw(offset, 2), 0); }
         public int ReadInt32(int offset) { return BitConverter.ToInt32(ReadRaw(offset, 4), 0); }
+        public double ReadDouble(int offset) { return BitConverter.ToDouble(ReadRaw(offset, 8), 0); }
         public void WriteByte(int offset, byte value) { WriteRaw(offset, new byte[] { value }); }
         public void WriteSByte(int offset, sbyte value) { WriteRaw(offset, new byte[] { (byte) value }); }
         public void WriteInt16(int offset, short value) { WriteRaw(offset, BitConverter.GetBytes(value)); }
         public void WriteInt32(int offset, int value) { WriteRaw(offset, BitConverter.GetBytes(value)); }
+        public void WriteDouble(int offset, double value) { WriteRaw(offset, BitConverter.GetBytes(value)); }
 
         byte[] ReadBlock(Block block) {
             return ReadRaw(block.Pos, block.Size);
@@ -175,7 +177,9 @@ namespace CM0102_Starter_Kit {
         // ---------------- Players (layouts from CM0102Patcher Scouter/SaveReader) ----------------
         // staff.dat: 110-byte records. +0 id, +4/+8/+12 first/second/common name ids,
         // +16 DOB (0-BASED day-of-year int16, year int16, leap int32), +26 nation,
-        // +30 second nation, +34/+35 international caps/goals (bytes), +57 club id,
+        // +30 second nation, +34/+35 international caps/goals (bytes),
+        // +36 national job: for players the nat_club.dat id of the national team
+        // they are CURRENTLY squad-assigned to (-1 = none), +57 club id,
         // +82 value, +86..+93 mentals (bytes 0-20, alphabetical), +97 player.dat id,
         // +105 nonplayer.dat record index (-1 = none).
         // nonplayer.dat: 68-byte records (layout from CM0102Patcher SaveChanger
@@ -200,6 +204,7 @@ namespace CM0102_Starter_Kit {
             public int PlayerBase;      // file offset of player record
             public int ContractBase;    // file offset of contract record (-1 if none)
             public int NonPlayerBase;   // file offset of nonplayer.dat record (-1 if none)
+            public string NationalTeam; // nat_club name from staff +36, "" if not in a squad
             public int FitnessBase;     // file offset of injury.dat fitness record (-1 if none)
             public int PrefsBase;       // file offset of Preferences.dat record (-1 if none)
             public string Name;
@@ -209,8 +214,13 @@ namespace CM0102_Starter_Kit {
             public int Age;
         }
 
+        // nation.dat 290-byte records (layout from CM0102Patcher SaveChanger
+        // Structures.cs TNation): +0 id, +4 name (51), +126 state of development,
+        // +132 game importance, +133 league standard (0-20), +142 reputation
+        // (int16, x50 of the 0-200 scale), +168 current FIFA coefficient (double).
         public class Nation {
             public int Id;
+            public int RecordBase;      // file offset of the nation.dat record
             public string Name;
         }
 
@@ -336,7 +346,11 @@ namespace CM0102_Starter_Kit {
                 int nationId = BitConverter.ToInt32(nationBuffer, recordBase);
                 string nationName = BufferString(nationBuffer, recordBase + 4, 50);
                 nationNames[nationId] = nationName;
-                this.nations.Add(new Nation { Id = nationId, Name = nationName });
+                this.nations.Add(new Nation {
+                    Id = nationId,
+                    RecordBase = nationBlock.Pos + recordBase,
+                    Name = nationName
+                });
             }
             this.nations.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.CurrentCultureIgnoreCase));
 
@@ -366,6 +380,19 @@ namespace CM0102_Starter_Kit {
                 }
             }
             contractBuffer = null;
+
+            // nat_club.dat: 581-byte club records for the national teams (ids continue
+            // after club.dat); a player's staff +36 points here while in a squad
+            Dictionary<int, string> natClubNames = new Dictionary<int, string>();
+            Block natClubBlock;
+            if (this.blocks.TryGetValue("nat_club.dat", out natClubBlock)) {
+                byte[] natClubBuffer = ReadBlock(natClubBlock);
+                for (int record = 0; record < natClubBlock.Size / 581; record++) {
+                    int recordBase = record * 581;
+                    natClubNames[BitConverter.ToInt32(natClubBuffer, recordBase)] =
+                        BufferString(natClubBuffer, recordBase + 4, 51);
+                }
+            }
 
             // nonplayer.dat: 68-byte records referenced by index from staff +105
             Block nonPlayerBlock;
@@ -411,6 +438,11 @@ namespace CM0102_Starter_Kit {
                 int contractBase;
                 int fitnessBase = injuryBlock != null && (record + 1) * 31 <= injuryBlock.Size
                     ? injuryBlock.Pos + record * 31 : -1;
+                int nationalJob = BitConverter.ToInt32(staffBuffer, staffBase + 36);
+                string nationalTeam;
+                if (nationalJob < 0 || !natClubNames.TryGetValue(nationalJob, out nationalTeam)) {
+                    nationalTeam = "";
+                }
                 int nonPlayerIndex = BitConverter.ToInt32(staffBuffer, staffBase + 105);
                 int nonPlayerBase = nonPlayerBuffer != null &&
                     nonPlayerIndex >= 0 && nonPlayerIndex < nonPlayerCount &&
@@ -425,6 +457,7 @@ namespace CM0102_Starter_Kit {
                     PlayerBase = isPlayer ? playerBlock.Pos + playerRecordBase : -1,
                     ContractBase = contractOffsets.TryGetValue(staffId, out contractBase) ? contractBase : -1,
                     NonPlayerBase = nonPlayerBase,
+                    NationalTeam = nationalTeam,
                     FitnessBase = fitnessBase,
                     PrefsBase = prefsBase,
                     Name = name,
