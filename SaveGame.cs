@@ -176,7 +176,14 @@ namespace CM0102_Starter_Kit {
         // staff.dat: 110-byte records. +0 id, +4/+8/+12 first/second/common name ids,
         // +16 DOB (0-BASED day-of-year int16, year int16, leap int32), +26 nation,
         // +30 second nation, +34/+35 international caps/goals (bytes), +57 club id,
-        // +82 value, +86..+93 mentals (bytes 0-20, alphabetical), +97 player.dat id.
+        // +82 value, +86..+93 mentals (bytes 0-20, alphabetical), +97 player.dat id,
+        // +105 nonplayer.dat record index (-1 = none).
+        // nonplayer.dat: 68-byte records (layout from CM0102Patcher SaveChanger
+        // Structures.cs TNonPlayer). +0 id (== record index), +4/+6 CA/PA,
+        // +8/+10/+12 home/current/world reputation (int16, x50 like players),
+        // +14..+34 twenty-one coaching attributes (CA-weighted intrinsic sbytes,
+        // alphabetical: Attacking..Youngsters), +35..+66 eight position ints,
+        // +67 formation.
         // player.dat: 70-byte records. +0 id, +4 squad number, +5/+7 CA/PA,
         // +9/+11/+13 home/current/world reputation (int16), +15..+26 twelve position
         // ratings, +27..+68 forty-two playing attributes (sbyte), +69 morale (0-20).
@@ -192,6 +199,7 @@ namespace CM0102_Starter_Kit {
             public int StaffBase;       // file offset of staff record
             public int PlayerBase;      // file offset of player record
             public int ContractBase;    // file offset of contract record (-1 if none)
+            public int NonPlayerBase;   // file offset of nonplayer.dat record (-1 if none)
             public int FitnessBase;     // file offset of injury.dat fitness record (-1 if none)
             public int PrefsBase;       // file offset of Preferences.dat record (-1 if none)
             public string Name;
@@ -343,6 +351,12 @@ namespace CM0102_Starter_Kit {
             }
             contractBuffer = null;
 
+            // nonplayer.dat: 68-byte records referenced by index from staff +105
+            Block nonPlayerBlock;
+            this.blocks.TryGetValue("nonplayer.dat", out nonPlayerBlock);
+            byte[] nonPlayerBuffer = nonPlayerBlock != null ? ReadBlock(nonPlayerBlock) : null;
+            int nonPlayerCount = nonPlayerBlock != null ? nonPlayerBlock.Size / 68 : 0;
+
             // injury.dat fitness table: staff-count 31-byte records in staff table order
             Block injuryBlock;
             this.blocks.TryGetValue("injury.dat", out injuryBlock);
@@ -381,6 +395,11 @@ namespace CM0102_Starter_Kit {
                 int contractBase;
                 int fitnessBase = injuryBlock != null && (record + 1) * 31 <= injuryBlock.Size
                     ? injuryBlock.Pos + record * 31 : -1;
+                int nonPlayerIndex = BitConverter.ToInt32(staffBuffer, staffBase + 105);
+                int nonPlayerBase = nonPlayerBuffer != null &&
+                    nonPlayerIndex >= 0 && nonPlayerIndex < nonPlayerCount &&
+                    BitConverter.ToInt32(nonPlayerBuffer, nonPlayerIndex * 68) == nonPlayerIndex
+                    ? nonPlayerBlock.Pos + nonPlayerIndex * 68 : -1;
                 int prefsBase = prefsBuffer != null && staffId >= 0 && staffId < prefsCount &&
                     BitConverter.ToInt32(prefsBuffer, staffId * 52) == staffId
                     ? prefsBlock.Pos + staffId * 52 : -1;
@@ -389,6 +408,7 @@ namespace CM0102_Starter_Kit {
                     StaffBase = staffBlock.Pos + staffBase,
                     PlayerBase = isPlayer ? playerBlock.Pos + playerRecordBase : -1,
                     ContractBase = contractOffsets.TryGetValue(staffId, out contractBase) ? contractBase : -1,
+                    NonPlayerBase = nonPlayerBase,
                     FitnessBase = fitnessBase,
                     PrefsBase = prefsBase,
                     Name = name,

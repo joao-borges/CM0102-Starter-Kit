@@ -7,14 +7,28 @@ namespace CM0102_Starter_Kit {
     /// <summary>
     /// Editor dialog for non-player staff (managers, coaches, scouts, retired
     /// players...). Edits the staff.dat personal fields (birth date, nationalities,
-    /// caps/goals, value, mentals), the contract wage and the Preferences.dat
-    /// likes/dislikes. Coaching attributes live in nonplayer.dat, whose layout is
-    /// not reverse-engineered yet, so they are not exposed here.
+    /// caps/goals, value, mentals), the contract wage, the nonplayer.dat coaching
+    /// record (CA/PA, reputations, 21 coaching attributes stored as CA-weighted
+    /// intrinsics - same "high branch" maths as player attributes) and the
+    /// Preferences.dat likes/dislikes. Manager wages are NOT in contract.dat and
+    /// have no known on-disk home (man_conf.dat is board-confidence data), so the
+    /// wage field stays disabled for staff without a contract record.
+    /// Coaching attributes display clamped to 1-20 (the true value of an elite
+    /// manager can exceed 20), so only attributes the user actually changed are
+    /// written back.
     /// </summary>
     class StaffEditForm : Form {
         static readonly string[] MentalNames = {
             "Adaptability", "Ambition", "Determination", "Loyalty",
             "Pressure", "Professionalism", "Sportsmanship", "Temperament"
+        };
+
+        // nonplayer.dat record +14..+34, alphabetical storage order
+        static readonly string[] CoachingNames = {
+            "Attacking", "Business", "Coaching", "Coaching GKs", "Coaching Tech.",
+            "Directness", "Discipline", "Free Roles", "Interference", "Judging Ability",
+            "Judging Potential", "Man Handling", "Marking", "Motivating", "Offside",
+            "Patience", "Physiotherapy", "Pressing", "Resources", "Tactics", "Youngsters"
         };
 
         readonly SaveGame save;
@@ -24,6 +38,11 @@ namespace CM0102_Starter_Kit {
         Label ageLabel;
         int originalDobDay, originalDobMonth, originalDobYear;
         readonly NumericUpDown[] mentals = new NumericUpDown[8];
+        // Coaching tab (nonplayer.dat); all null when the person has no record
+        NumericUpDown ability, potential, homeRep, currentRep, worldRep;
+        readonly NumericUpDown[] coaching = new NumericUpDown[21];
+        int originalAbility, originalPotential, originalHomeRep, originalCurrentRep, originalWorldRep;
+        readonly int[] originalCoaching = new int[21];
         readonly ComboBox[] prefClubs = new ComboBox[6];
         readonly TextBox[] prefStaffBoxes = new TextBox[6];
         readonly int[] prefStaffIds = new int[6];
@@ -61,7 +80,27 @@ namespace CM0102_Starter_Kit {
         }
 
         void BuildControls() {
-            GroupBox personal = new GroupBox { Text = "Personal details", Location = new Point(10, 8), Size = new Size(880, 120) };
+            TabControl tabs = new TabControl { Location = new Point(10, 8), Size = new Size(880, 565) };
+            TabPage personalPage = new TabPage("Personal");
+            TabPage coachingPage = new TabPage("Coaching");
+            TabPage prefsPage = new TabPage("Likes && Dislikes");
+            tabs.TabPages.Add(personalPage);
+            tabs.TabPages.Add(coachingPage);
+            tabs.TabPages.Add(prefsPage);
+            BuildPersonalPage(personalPage);
+            BuildCoachingPage(coachingPage);
+            BuildPrefsPage(prefsPage);
+
+            Button ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(690, 582), Size = new Size(90, 30) };
+            ok.Click += (s, e) => WriteValues();
+            Button cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Location = new Point(790, 582), Size = new Size(90, 30) };
+            this.AcceptButton = ok;
+            this.CancelButton = cancel;
+            this.Controls.AddRange(new Control[] { tabs, ok, cancel });
+        }
+
+        void BuildPersonalPage(TabPage page) {
+            GroupBox personal = new GroupBox { Text = "Personal details", Location = new Point(8, 8), Size = new Size(856, 120) };
             personal.Controls.Add(new Label { Text = "Born", Location = new Point(12, 28), AutoSize = true });
             this.dobDay = MakeNumeric(1, 31);
             this.dobDay.Width = 45;
@@ -121,33 +160,66 @@ namespace CM0102_Starter_Kit {
             this.intGoals.Location = new Point(760, 62);
             personal.Controls.Add(this.intGoals);
 
-            GroupBox mentalsBox = new GroupBox { Text = "Mental attributes (0-20)", Location = new Point(10, 136), Size = new Size(880, 120) };
+            GroupBox mentalsBox = new GroupBox { Text = "Mental attributes (0-20)", Location = new Point(8, 136), Size = new Size(856, 120) };
             for (int i = 0; i < 8; i++) {
                 int column = i % 4, row = i / 4;
-                mentalsBox.Controls.Add(new Label { Text = MentalNames[i], Location = new Point(12 + column * 218, 26 + row * 44), AutoSize = true });
+                mentalsBox.Controls.Add(new Label { Text = MentalNames[i], Location = new Point(12 + column * 212, 26 + row * 44), AutoSize = true });
                 this.mentals[i] = MakeNumeric(0, 20);
-                this.mentals[i].Location = new Point(130 + column * 218, 22 + row * 44);
+                this.mentals[i].Location = new Point(130 + column * 212, 22 + row * 44);
                 mentalsBox.Controls.Add(this.mentals[i]);
             }
 
-            BuildPrefsControls();
-
-            Button ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Location = new Point(690, 578), Size = new Size(90, 30) };
-            ok.Click += (s, e) => WriteValues();
-            Button cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Location = new Point(790, 578), Size = new Size(90, 30) };
-            this.AcceptButton = ok;
-            this.CancelButton = cancel;
-            this.Controls.Add(personal);
-            this.Controls.Add(mentalsBox);
-            this.Controls.Add(ok);
-            this.Controls.Add(cancel);
+            page.Controls.AddRange(new Control[] { personal, mentalsBox });
         }
 
-        void BuildPrefsControls() {
+        void BuildCoachingPage(TabPage page) {
+            if (this.person.NonPlayerBase < 0) {
+                page.Controls.Add(new Label {
+                    Text = "This person has no coaching record in the save.",
+                    Location = new Point(14, 20), AutoSize = true, ForeColor = Color.DimGray
+                });
+                return;
+            }
+            GroupBox general = new GroupBox { Text = "General (0-200 scales)", Location = new Point(8, 8), Size = new Size(856, 80) };
+            this.ability = MakeNumeric(1, 200);
+            this.potential = MakeNumeric(1, 200);
+            this.currentRep = MakeNumeric(0, 200);
+            this.homeRep = MakeNumeric(0, 200);
+            this.worldRep = MakeNumeric(0, 200);
+            object[][] generalFields = {
+                new object[] { "Current Ability", this.ability }, new object[] { "Potential Ability", this.potential },
+                new object[] { "Cur. Reputation", this.currentRep }, new object[] { "Home Rep.", this.homeRep },
+                new object[] { "World Rep.", this.worldRep }
+            };
+            int x = 12;
+            foreach (object[] field in generalFields) {
+                Control control = (Control) field[1];
+                general.Controls.Add(new Label { Text = (string) field[0], Location = new Point(x, 22), AutoSize = true });
+                control.Location = new Point(x, 42);
+                general.Controls.Add(control);
+                x += control.Width + 60;
+            }
+
+            GroupBox attributesBox = new GroupBox {
+                Text = "Coaching attributes (as shown in game, 1-20; elite values above 20 show as 20)",
+                Location = new Point(8, 96), Size = new Size(856, 210)
+            };
+            for (int i = 0; i < 21; i++) {
+                int column = i % 6, row = i / 6;
+                attributesBox.Controls.Add(new Label { Text = CoachingNames[i], Location = new Point(12 + column * 141, 24 + row * 42), AutoSize = true });
+                this.coaching[i] = MakeNumeric(1, 20);
+                this.coaching[i].Location = new Point(15 + column * 141, 40 + row * 42);
+                attributesBox.Controls.Add(this.coaching[i]);
+            }
+
+            page.Controls.AddRange(new Control[] { general, attributesBox });
+        }
+
+        void BuildPrefsPage(TabPage page) {
             if (this.person.PrefsBase < 0) {
-                this.Controls.Add(new Label {
+                page.Controls.Add(new Label {
                     Text = "This save has no preferences record for this person.",
-                    Location = new Point(14, 270), AutoSize = true, ForeColor = Color.DimGray
+                    Location = new Point(14, 20), AutoSize = true, ForeColor = Color.DimGray
                 });
                 return;
             }
@@ -164,30 +236,30 @@ namespace CM0102_Starter_Kit {
 
             string[] clubTitles = { "Favourite clubs", "Disliked clubs" };
             for (int group = 0; group < 2; group++) {
-                GroupBox box = new GroupBox { Text = clubTitles[group], Location = new Point(10 + group * 446, 264), Size = new Size(434, 140) };
+                GroupBox box = new GroupBox { Text = clubTitles[group], Location = new Point(6 + group * 434, 8), Size = new Size(426, 140) };
                 for (int slot = 0; slot < 3; slot++) {
-                    ComboBox combo = UiHelper.MakeAutoCompleteCombo(396);
+                    ComboBox combo = UiHelper.MakeAutoCompleteCombo(392);
                     combo.Location = new Point(15, 24 + slot * 36);
                     combo.Items.AddRange(clubItemArray);
                     box.Controls.Add(combo);
                     this.prefClubs[group * 3 + slot] = combo;
                 }
-                this.Controls.Add(box);
+                page.Controls.Add(box);
             }
 
             string[] staffTitles = { "Favourite people", "Disliked people" };
             for (int group = 0; group < 2; group++) {
-                GroupBox box = new GroupBox { Text = staffTitles[group], Location = new Point(10 + group * 446, 412), Size = new Size(434, 140) };
+                GroupBox box = new GroupBox { Text = staffTitles[group], Location = new Point(6 + group * 434, 156), Size = new Size(426, 140) };
                 for (int slot = 0; slot < 3; slot++) {
                     int index = group * 3 + slot;
-                    TextBox display = new TextBox { Location = new Point(15, 24 + slot * 36), Width = 336, ReadOnly = true };
-                    Button pick = new Button { Text = "...", Location = new Point(358, 23 + slot * 36), Size = new Size(38, 24) };
+                    TextBox display = new TextBox { Location = new Point(15, 24 + slot * 36), Width = 332, ReadOnly = true };
+                    Button pick = new Button { Text = "...", Location = new Point(354, 23 + slot * 36), Size = new Size(38, 24) };
                     pick.Click += (s, e) => PickStaff(index);
                     box.Controls.Add(display);
                     box.Controls.Add(pick);
                     this.prefStaffBoxes[index] = display;
                 }
-                this.Controls.Add(box);
+                page.Controls.Add(box);
             }
         }
 
@@ -239,6 +311,28 @@ namespace CM0102_Starter_Kit {
                 this.ageLabel.Text = "(no birth date)";
             }
             RefreshAgeLabel();
+
+            if (this.person.NonPlayerBase >= 0) {
+                int recordBase = this.person.NonPlayerBase;
+                short ability16 = this.save.ReadInt16(recordBase + 4);
+                this.originalAbility = Math.Min(Math.Max((int) ability16, 1), 200);
+                this.originalPotential = Math.Min(Math.Max((int) this.save.ReadInt16(recordBase + 6), 1), 200);
+                // reputations stored x50 of the 0-200 scale, like players
+                this.originalHomeRep = Math.Min(Math.Max((int) Math.Round(this.save.ReadInt16(recordBase + 8) / 50.0), 0), 200);
+                this.originalCurrentRep = Math.Min(Math.Max((int) Math.Round(this.save.ReadInt16(recordBase + 10) / 50.0), 0), 200);
+                this.originalWorldRep = Math.Min(Math.Max((int) Math.Round(this.save.ReadInt16(recordBase + 12) / 50.0), 0), 200);
+                this.ability.Value = this.originalAbility;
+                this.potential.Value = this.originalPotential;
+                this.homeRep.Value = this.originalHomeRep;
+                this.currentRep.Value = this.originalCurrentRep;
+                this.worldRep.Value = this.originalWorldRep;
+                for (int i = 0; i < 21; i++) {
+                    sbyte stored = this.save.ReadSByte(recordBase + 14 + i);
+                    this.originalCoaching[i] = Math.Min(Math.Max(
+                        PlayerEditForm.ShownFromIntrinsicHigh(stored, ability16), 1), 20);
+                    this.coaching[i].Value = this.originalCoaching[i];
+                }
+            }
 
             if (this.person.PrefsBase >= 0) {
                 for (int i = 0; i < 6; i++) {
@@ -323,6 +417,36 @@ namespace CM0102_Starter_Kit {
                 this.save.WriteInt16(this.person.StaffBase + 18, (short) year);
                 this.save.WriteInt32(this.person.StaffBase + 20, year % 4 == 0 ? 1 : 0);
                 this.person.Age = CurrentAge(dayOfYear, year);
+            }
+
+            if (this.person.NonPlayerBase >= 0) {
+                int recordBase = this.person.NonPlayerBase;
+                if ((int) this.ability.Value != this.originalAbility) {
+                    this.save.WriteInt16(recordBase + 4, (short) this.ability.Value);
+                }
+                if ((int) this.potential.Value != this.originalPotential ||
+                    (int) this.ability.Value > this.originalPotential) {
+                    this.save.WriteInt16(recordBase + 6,
+                        (short) Math.Max(this.potential.Value, this.ability.Value));
+                }
+                if ((int) this.homeRep.Value != this.originalHomeRep) {
+                    this.save.WriteInt16(recordBase + 8, (short) (this.homeRep.Value * 50));
+                }
+                if ((int) this.currentRep.Value != this.originalCurrentRep) {
+                    this.save.WriteInt16(recordBase + 10, (short) (this.currentRep.Value * 50));
+                }
+                if ((int) this.worldRep.Value != this.originalWorldRep) {
+                    this.save.WriteInt16(recordBase + 12, (short) (this.worldRep.Value * 50));
+                }
+                // the 1-20 display is lossy (clamped at 20, truncated maths), so only
+                // attributes the user touched are re-encoded against the dialog CA
+                short newAbility16 = (short) this.ability.Value;
+                for (int i = 0; i < 21; i++) {
+                    if ((int) this.coaching[i].Value != this.originalCoaching[i]) {
+                        this.save.WriteSByte(recordBase + 14 + i,
+                            PlayerEditForm.IntrinsicFromShownHigh((int) this.coaching[i].Value, newAbility16));
+                    }
+                }
             }
 
             if (this.person.PrefsBase >= 0) {

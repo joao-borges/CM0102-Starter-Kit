@@ -560,6 +560,16 @@ namespace CM0102_Starter_Kit {
             }
         }
 
+        // Shared with StaffEditForm: coaching attributes in nonplayer.dat all use the
+        // high (CA/20) branch of the same intrinsic mapping.
+        internal static int ShownFromIntrinsicHigh(sbyte intrinsic, short ability) {
+            return Forward(intrinsic, ability, true);
+        }
+
+        internal static sbyte IntrinsicFromShownHigh(int shown, short ability) {
+            return FromDisplay(Kind.High, shown, ability, false);
+        }
+
         static int Forward(sbyte intrinsic, short ability, bool high) {
             double t = (intrinsic / 10.0) + (ability / (high ? 20.0 : 200.0)) + 10.0;
             double result = (t * t / 30.0) + (t / 3.0) + 0.5;
